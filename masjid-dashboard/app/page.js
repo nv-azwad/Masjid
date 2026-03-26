@@ -131,8 +131,15 @@ function PrayerManager({ prayers, onRefresh, onToast }) {
   const save = async (id) => {
     setSaving(true)
     const result = await api.put('/api/prayers', { id, ...form, adhan: form.adhan || null })
+    if (result.error) {
+      onToast(result.error, 'error')
+      setSaving(false)
+      return
+    }
     if (result.pending) {
       onToast(result.message, 'pending')
+    } else {
+      onToast('Prayer time updated', 'success')
     }
     await onRefresh()
     cancel()
@@ -164,7 +171,7 @@ function PrayerManager({ prayers, onRefresh, onToast }) {
                 <span />
                 <div className="flex gap-2 justify-end">
                   <button onClick={() => save(prayer.id)} disabled={saving} className="bg-masjid-green text-masjid-dark px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 disabled:opacity-50">
-                    <Icon name="save" size={14} /> Save
+                    <Icon name="save" size={14} /> {saving ? 'Saving...' : 'Save'}
                   </button>
                   <button onClick={cancel} className="bg-masjid-border text-gray-400 px-3 py-1.5 rounded-lg text-xs"><Icon name="x" size={14} /></button>
                 </div>
@@ -194,17 +201,27 @@ function PrayerManager({ prayers, onRefresh, onToast }) {
 // ── Jummah Manager ──
 function JummahManager({ jummah, onRefresh, onToast }) {
   const [editing, setEditing] = useState(false)
-  const [form, setForm] = useState(jummah || { name: '', time: '', khateeb: '' })
+  const [saving, setSaving] = useState(false)
+  const [form, setForm] = useState({ name: '', time: '', khateeb: '' })
 
-  useEffect(() => { if (jummah) setForm(jummah) }, [jummah])
+  useEffect(() => { if (jummah) setForm({ name: jummah.name || '', time: jummah.time || '', khateeb: jummah.khateeb || '' }) }, [jummah])
 
   const save = async () => {
+    setSaving(true)
     const result = await api.put('/api/jummah', { name: form.name, time: form.time, khateeb: form.khateeb })
+    if (result.error) {
+      onToast(result.error, 'error')
+      setSaving(false)
+      return
+    }
     if (result.pending) {
       onToast(result.message, 'pending')
+    } else {
+      onToast('Jummah settings updated', 'success')
     }
     await onRefresh()
     setEditing(false)
+    setSaving(false)
   }
 
   if (!jummah) return <div className="text-gray-500">Loading...</div>
@@ -225,8 +242,8 @@ function JummahManager({ jummah, onRefresh, onToast }) {
               </div>
             ))}
             <div className="flex gap-3 mt-2">
-              <button onClick={save} className="bg-masjid-green text-masjid-dark px-5 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2"><Icon name="save" size={16} /> Save</button>
-              <button onClick={() => { setForm(jummah); setEditing(false) }} className="border border-masjid-border text-gray-400 px-5 py-2.5 rounded-lg text-sm bg-transparent">Cancel</button>
+              <button onClick={save} disabled={saving} className="bg-masjid-green text-masjid-dark px-5 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 disabled:opacity-50"><Icon name="save" size={16} /> {saving ? 'Saving...' : 'Save'}</button>
+              <button onClick={() => { setForm({ name: jummah?.name || '', time: jummah?.time || '', khateeb: jummah?.khateeb || '' }); setEditing(false) }} className="border border-masjid-border text-gray-400 px-5 py-2.5 rounded-lg text-sm bg-transparent">Cancel</button>
             </div>
           </div>
         ) : (
@@ -255,51 +272,67 @@ function JummahManager({ jummah, onRefresh, onToast }) {
 function ImamsManager({ imams, onRefresh, onToast }) {
   const [editing, setEditing] = useState(null)
   const [adding, setAdding] = useState(false)
+  const [saving, setSaving] = useState(false)
   const empty = { name: '', role: '', bio: '', contact: '' }
   const [form, setForm] = useState(empty)
 
   const cancel = () => { setEditing(null); setAdding(false); setForm(empty) }
 
   const save = async () => {
+    setSaving(true)
     let result
     if (adding) {
       result = await api.post('/api/imams', form)
     } else {
       result = await api.put('/api/imams', { id: editing, ...form })
     }
+    if (result.error) {
+      onToast(result.error, 'error')
+      setSaving(false)
+      return
+    }
     if (result.pending) {
       onToast(result.message, 'pending')
+    } else {
+      onToast(adding ? 'Imam added successfully' : 'Imam updated successfully', 'success')
     }
     await onRefresh()
     cancel()
+    setSaving(false)
   }
 
   const remove = async (id) => {
     const result = await api.del(`/api/imams?id=${id}`)
     if (result.pending) {
       onToast(result.message, 'pending')
+    } else {
+      onToast('Imam removed', 'success')
     }
     await onRefresh()
   }
 
-  const FormFields = () => (
+  const inputClass = "w-full bg-masjid-bg border border-masjid-border rounded-lg px-4 py-2.5 text-white text-sm outline-none focus:border-masjid-green"
+
+  const formFields = (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      {[['Full Name', 'name'], ['Role / Title', 'role']].map(([label, key]) => (
-        <div key={key}>
-          <label className="block text-masjid-gold text-xs mb-1.5 font-medium">{label}</label>
-          <input className="w-full bg-masjid-bg border border-masjid-border rounded-lg px-4 py-2.5 text-white text-sm outline-none focus:border-masjid-green" value={form[key]} onChange={e => setForm({ ...form, [key]: e.target.value })} />
-        </div>
-      ))}
+      <div>
+        <label className="block text-masjid-gold text-xs mb-1.5 font-medium">Full Name</label>
+        <input className={inputClass} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+      </div>
+      <div>
+        <label className="block text-masjid-gold text-xs mb-1.5 font-medium">Role / Title</label>
+        <input className={inputClass} value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} />
+      </div>
       <div className="sm:col-span-2">
         <label className="block text-masjid-gold text-xs mb-1.5 font-medium">Biography</label>
-        <textarea className="w-full bg-masjid-bg border border-masjid-border rounded-lg px-4 py-2.5 text-white text-sm outline-none focus:border-masjid-green min-h-[80px] resize-y" value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} />
+        <textarea className={`${inputClass} min-h-[80px] resize-y`} value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} />
       </div>
       <div className="sm:col-span-2">
         <label className="block text-masjid-gold text-xs mb-1.5 font-medium">Contact Email</label>
-        <input className="w-full bg-masjid-bg border border-masjid-border rounded-lg px-4 py-2.5 text-white text-sm outline-none focus:border-masjid-green" value={form.contact} onChange={e => setForm({ ...form, contact: e.target.value })} />
+        <input className={inputClass} value={form.contact} onChange={e => setForm({ ...form, contact: e.target.value })} />
       </div>
       <div className="sm:col-span-2 flex gap-3 mt-1">
-        <button onClick={save} className="bg-masjid-green text-masjid-dark px-5 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2"><Icon name="save" size={16} /> {adding ? 'Add Imam' : 'Save'}</button>
+        <button onClick={save} disabled={saving} className="bg-masjid-green text-masjid-dark px-5 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 disabled:opacity-50"><Icon name="save" size={16} /> {saving ? 'Saving...' : adding ? 'Add Imam' : 'Save'}</button>
         <button onClick={cancel} className="border border-masjid-border text-gray-400 px-5 py-2.5 rounded-lg text-sm bg-transparent">Cancel</button>
       </div>
     </div>
@@ -314,14 +347,14 @@ function ImamsManager({ imams, onRefresh, onToast }) {
       {adding && (
         <div className="bg-masjid-card rounded-xl p-6 border border-masjid-green/30 mb-4">
           <h3 className="text-masjid-green font-medium mb-4">New Imam Profile</h3>
-          <FormFields />
+          {formFields}
         </div>
       )}
       <div className="flex flex-col gap-4">
         {imams.map((imam) => (
           <div key={imam.id} className={`bg-masjid-card rounded-xl p-5 border ${editing === imam.id ? 'border-masjid-green/40' : 'border-masjid-border'}`}>
             {editing === imam.id ? (
-              <><h3 className="text-masjid-gold font-medium mb-4">Editing: {imam.name}</h3><FormFields /></>
+              <><h3 className="text-masjid-gold font-medium mb-4">Editing: {imam.name}</h3>{formFields}</>
             ) : (
               <div className="flex items-start gap-4">
                 <div className="w-14 h-14 bg-masjid-green rounded-full flex items-center justify-center flex-shrink-0"><Icon name="user" size={28} className="text-masjid-dark" /></div>
@@ -611,6 +644,18 @@ function UserManagement({ currentUser, onToast }) {
   const addUser = async () => {
     if (!form.name || !form.email || !form.password) {
       onToast('All fields are required', 'error')
+      return
+    }
+    if (form.password.length < 8) {
+      onToast('Password must be at least 8 characters', 'error')
+      return
+    }
+    if (!/[A-Z]/.test(form.password)) {
+      onToast('Password must contain at least one uppercase letter', 'error')
+      return
+    }
+    if (!/[0-9]/.test(form.password)) {
+      onToast('Password must contain at least one number', 'error')
       return
     }
     const result = await api.post('/api/users', form)
