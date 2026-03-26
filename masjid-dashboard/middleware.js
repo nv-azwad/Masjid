@@ -28,6 +28,9 @@ export function middleware(request) {
     return NextResponse.next()
   }
 
+  // Allow cron jobs (authenticated by CRON_SECRET in the route handler)
+  if (pathname.startsWith('/api/cron/')) return NextResponse.next()
+
   // Allow member registration and push token endpoints (mobile app)
   if (pathname === '/api/members' && request.method === 'POST') return NextResponse.next()
   if (pathname.startsWith('/api/push-tokens')) return NextResponse.next()
