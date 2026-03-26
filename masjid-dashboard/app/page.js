@@ -9,11 +9,25 @@ import { useRouter } from 'next/navigation'
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // ── API helpers ──
+async function apiCall(url, options = {}) {
+  try {
+    const res = await fetch(url, { credentials: 'include', ...options })
+    const data = await res.json()
+    if (!res.ok && !data.error) {
+      return { error: `Request failed (${res.status})` }
+    }
+    return data
+  } catch (e) {
+    console.error('API error:', e)
+    return { error: 'Network error — please try again' }
+  }
+}
+
 const api = {
-  get: (url) => fetch(url, { credentials: 'include' }).then(r => r.json()),
-  post: (url, data) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(data) }).then(r => r.json()),
-  put: (url, data) => fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(data) }).then(r => r.json()),
-  del: (url) => fetch(url, { method: 'DELETE', credentials: 'include' }).then(r => r.json()),
+  get: (url) => apiCall(url),
+  post: (url, data) => apiCall(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }),
+  put: (url, data) => apiCall(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }),
+  del: (url) => apiCall(url, { method: 'DELETE' }),
 }
 
 // ── Toast Notification ──
@@ -773,8 +787,11 @@ export default function DashboardPage() {
     setToast({ message, type })
   }, [])
 
-  // Check auth on mount
+  // Check auth on mount + warm up DB connection
   useEffect(() => {
+    // Warm up the DB immediately to avoid cold start on first action
+    fetch('/api/keepalive')
+
     fetch('/api/auth/me', { credentials: 'include' })
       .then(r => r.json())
       .then(data => {
@@ -788,15 +805,25 @@ export default function DashboardPage() {
       .finally(() => setAuthLoading(false))
   }, [router])
 
+  // Keep DB warm while dashboard is open (ping every 4 min)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetch('/api/keepalive')
+    }, 4 * 60 * 1000)
+    return () => clearInterval(interval)
+  }, [])
+
   const loadData = useCallback(async () => {
     try {
-      const data = await api.get('/api/mosque')
-      setPrayers(data.prayers || [])
-      setJummah(data.jummah)
-      setImams(data.imams || [])
+      // Load mosque data and pending count in parallel
+      const [mosqueData, pending] = await Promise.all([
+        api.get('/api/mosque'),
+        api.get('/api/pending'),
+      ])
+      setPrayers(mosqueData.prayers || [])
+      setJummah(mosqueData.jummah)
+      setImams(mosqueData.imams || [])
 
-      // Load pending count
-      const pending = await api.get('/api/pending')
       if (Array.isArray(pending)) {
         setPendingCount(pending.filter(p => p.status === 'PENDING').length)
       }

@@ -25,16 +25,23 @@ export async function PUT(request) {
     const { success, data, error } = validate(prayerUpdateSchema, body)
     if (!success) return NextResponse.json({ error }, { status: 400 })
 
-    const { id, name, adhan, time, isNext } = data
+    const { id, ...fields } = data
+
+    // Build update object — only include fields that were actually sent
+    const updateData = {}
+    if (fields.name !== undefined) updateData.name = fields.name
+    if (fields.adhan !== undefined) updateData.adhan = fields.adhan
+    if (fields.time !== undefined) updateData.time = fields.time
+    if (fields.isNext !== undefined) updateData.isNext = fields.isNext
 
     // Admin: apply directly
     if (user.role === 'ADMIN') {
-      if (isNext) {
+      if (updateData.isNext) {
         await prisma.prayer.updateMany({ data: { isNext: false } })
       }
       const prayer = await prisma.prayer.update({
         where: { id },
-        data: { name, adhan: adhan ?? undefined, time, isNext: isNext ?? undefined },
+        data: updateData,
       })
       return NextResponse.json(prayer)
     }
@@ -45,7 +52,7 @@ export async function PUT(request) {
         resourceType: 'PRAYER',
         action: 'UPDATE',
         resourceId: id,
-        data: { name, adhan, time, isNext },
+        data: updateData,
         submittedBy: user.id,
       },
     })

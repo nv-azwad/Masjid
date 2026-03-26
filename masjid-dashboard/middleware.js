@@ -18,7 +18,7 @@ export function middleware(request) {
     return NextResponse.next()
   }
 
-  const publicGetApis = ['/api/prayers', '/api/imams', '/api/jummah', '/api/mosque', '/api/notifications']
+  const publicGetApis = ['/api/prayers', '/api/imams', '/api/jummah', '/api/mosque', '/api/notifications', '/api/keepalive']
   if (request.method === 'GET' && publicGetApis.some(api => pathname.startsWith(api))) {
     return NextResponse.next()
   }
