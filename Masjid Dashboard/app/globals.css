@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #0a0c0a;
+  color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0f1210; }
+::-webkit-scrollbar-thumb { background: #2a2d2a; border-radius: 3px; }
+
+input:focus, textarea:focus, select:focus {
+  border-color: #00ff7f !important;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 255, 127, 0.15);
+}

@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Environment files (contain secrets)
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Next.js
+.next/
+out/
+
+# Expo
+.expo/
+dist/
+web-build/
+
+# Build artifacts
+*.tsbuildinfo
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Debug
+npm-debug.log*
+
+# Mobile signing keys
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*

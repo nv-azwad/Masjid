@@ -1,0 +1,79 @@
+import { z } from 'zod'
+
+// Reusable patterns
+const timePattern = /^\d{1,2}:\d{2}\s?(AM|PM)$/i
+
+// Prayer validation
+export const prayerUpdateSchema = z.object({
+  id: z.string().min(1, 'Prayer ID is required'),
+  name: z.string().min(1).max(50).optional(),
+  adhan: z.string().regex(timePattern, 'Invalid time format (e.g. 5:00 AM)').optional().nullable(),
+  time: z.string().regex(timePattern, 'Invalid time format (e.g. 5:15 AM)').optional(),
+  isNext: z.boolean().optional(),
+})
+
+// Imam validation
+export const imamCreateSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(100),
+  role: z.string().min(1, 'Role is required').max(100),
+  bio: z.string().max(2000).default(''),
+  contact: z.string().email('Invalid email').max(200).optional().or(z.literal('')),
+})
+
+export const imamUpdateSchema = z.object({
+  id: z.string().min(1, 'Imam ID is required'),
+  name: z.string().min(1).max(100).optional(),
+  role: z.string().min(1).max(100).optional(),
+  bio: z.string().max(2000).optional(),
+  contact: z.string().email('Invalid email').max(200).optional().or(z.literal('')),
+})
+
+// Jummah validation
+export const jummahUpdateSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  time: z.string().regex(timePattern, 'Invalid time format (e.g. 1:15 PM)').optional(),
+  khateeb: z.string().min(1).max(200).optional(),
+})
+
+// Notification validation
+export const notificationSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(200),
+  message: z.string().min(1, 'Message is required').max(2000),
+})
+
+// User validation
+export const PASSWORD_MIN_LENGTH = 8
+export const passwordSchema = z
+  .string()
+  .min(PASSWORD_MIN_LENGTH, `Password must be at least ${PASSWORD_MIN_LENGTH} characters`)
+  .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+  .regex(/[0-9]/, 'Password must contain at least one number')
+
+export const userCreateSchema = z.object({
+  email: z.string().email('Invalid email address').max(200),
+  password: passwordSchema,
+  name: z.string().min(1, 'Name is required').max(100),
+  role: z.enum(['ADMIN', 'MODERATOR']).default('MODERATOR'),
+})
+
+export const passwordChangeSchema = z.object({
+  currentPassword: z.string().min(1, 'Current password is required'),
+  newPassword: passwordSchema,
+})
+
+// Pending change validation
+export const pendingReviewSchema = z.object({
+  id: z.string().min(1, 'Change ID is required'),
+  status: z.enum(['APPROVED', 'DENIED']),
+  reason: z.string().max(500).optional(),
+})
+
+// Helper to validate and return clean error responses
+export function validate(schema, data) {
+  const result = schema.safeParse(data)
+  if (!result.success) {
+    const errors = result.error.errors.map(e => e.message).join(', ')
+    return { success: false, error: errors }
+  }
+  return { success: true, data: result.data }
+}

@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "Gausul Azam Mosjid",
+    "slug": "gausul-azam-mosjid",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "masjid",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "backgroundColor": "#0f1210"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0f1210"
+      },
+      "package": "com.cubextech.gausulazam"
+    },
+    "ios": {
+      "bundleIdentifier": "com.cubextech.gausulazam",
+      "supportsTablet": true
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sensors",
+      "expo-notifications",
+      "expo-location",
+      "expo-asset"
+    ]
+  }
+}

@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MODERATOR
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(MODERATOR)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  submittedChanges PendingChange[] @relation("submitted")
+  reviewedChanges  PendingChange[] @relation("reviewed")
+}
+
+model PendingChange {
+  id           String   @id @default(cuid())
+  resourceType String   // PRAYER, IMAM, JUMMAH, NOTIFICATION
+  action       String   // CREATE, UPDATE, DELETE
+  resourceId   String?  // null for CREATE actions
+  data         Json     // proposed changes
+  status       String   @default("PENDING") // PENDING, APPROVED, DENIED
+  reason       String?  // denial reason
+  submittedBy  String
+  reviewedBy   String?
+  submitter    User     @relation("submitted", fields: [submittedBy], references: [id])
+  reviewer     User?    @relation("reviewed", fields: [reviewedBy], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Mosque {
+  id        String   @id @default(cuid())
+  name      String
+  address   String
+  phone     String?
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Prayer {
+  id        String   @id @default(cuid())
+  name      String
+  adhan     String?
+  time      String
+  isNext    Boolean  @default(false)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model JummahSetting {
+  id        String   @id @default(cuid())
+  name      String   @default("Friday Jummah")
+  time      String
+  khateeb   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Imam {
+  id        String   @id @default(cuid())
+  name      String
+  role      String
+  bio       String
+  contact   String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  title     String
+  message   String
+  sentAt    DateTime @default(now())
+}
+
+model PushToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  memberId  String?
+  member    Member?  @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Community members (mosque attendees) - separate from admin User model
+model Member {
+  id          String   @id @default(cuid())
+  firebaseUid String   @unique
+  phone       String   @unique
+  name        String?
+  language    String   @default("bn") // bn, en, ar
+  notifyAll   Boolean  @default(true)
+  prayerPrefs Json?    // { fajr: true, dhuhr: true, asr: true, maghrib: true, isha: true, jummah: true }
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  pushTokens  PushToken[]
+}
