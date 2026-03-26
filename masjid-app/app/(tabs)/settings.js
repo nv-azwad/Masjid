@@ -144,7 +144,7 @@ export default function SettingsScreen() {
           <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: 2 }}>Road 9, Sector 13, Uttara, Dhaka</Text>
           <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: 2 }}>Version 1.0.0</Text>
           <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 12 }}>
-            © 2026 Gausul Azam Jameh Mosjid · Powered by CubeXTech
+            © 2026 Gausul Azam Jameh Mosjid
           </Text>
         </View>
       </ScrollView>

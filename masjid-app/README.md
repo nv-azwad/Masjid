@@ -100,4 +100,4 @@ The app reads data from the dashboard API. Make sure:
 If the API is unreachable, the app falls back to hardcoded sample data.
 
 ---
-© 2026 Gausul Azam Jameh Mosjid · Powered by CubeXTech Sdn Bhd
+© 2026 Gausul Azam Jameh Mosjid

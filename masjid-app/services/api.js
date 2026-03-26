@@ -24,18 +24,16 @@ export async function fetchMosqueData() {
     const data = await res.json()
     if (data.error) throw new Error(data.error)
 
-    // Merge: use dashboard jamaat times + calculated adhan times
+    // Use dashboard adhan + jamaat times directly (admin controls both)
+    // Fall back to locally calculated adhan if dashboard doesn't have one
     if (data.prayers && data.prayers.length > 0) {
-      const prayerNames = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha']
       data.prayers = markNextPrayer(data.prayers.map((p) => {
-        // Find the matching calculated prayer to get the adhan time
         const calc = calculated.find(
           (c) => c.name.toLowerCase() === p.name.toLowerCase()
         )
         return {
           ...p,
-          adhan: calc ? calc.adhan : null,
-          // Dashboard 'time' field = jamaat time (set by admin)
+          adhan: p.adhan || (calc ? calc.adhan : null),
         }
       }))
     }

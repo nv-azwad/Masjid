@@ -58,4 +58,4 @@ npm run build
 ```
 
 ---
-© 2026 CubeXTech Sdn Bhd
+© 2026 Gausul Azam Jameh Mosjid

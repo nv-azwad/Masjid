@@ -8,14 +8,13 @@ const DHAKA_COORDS = new Coordinates(23.8759, 90.3795)
 const PARAMS = CalculationMethod.Karachi()
 PARAMS.madhab = Madhab.Hanafi
 
-// Approximate jamaat offsets (minutes after adhan)
-// Leaning early so people arrive on time
+// Jamaat offsets (minutes after adhan) — matches dashboard settings
 const JAMAAT_OFFSETS = {
-  fajr: 15,
-  dhuhr: 25,
-  asr: 25,
-  maghrib: 5,
-  isha: 40,
+  fajr: 25,
+  dhuhr: 20,
+  asr: 20,
+  maghrib: 7,
+  isha: 20,
 }
 
 // Format a Date object to "h:mm AM/PM"
