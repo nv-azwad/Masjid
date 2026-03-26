@@ -18,6 +18,11 @@ export function middleware(request) {
     return NextResponse.next()
   }
 
+  // Allow CORS preflight requests
+  if (request.method === 'OPTIONS') {
+    return new NextResponse(null, { status: 204 })
+  }
+
   const publicGetApis = ['/api/prayers', '/api/imams', '/api/jummah', '/api/mosque', '/api/notifications', '/api/keepalive']
   if (request.method === 'GET' && publicGetApis.some(api => pathname.startsWith(api))) {
     return NextResponse.next()

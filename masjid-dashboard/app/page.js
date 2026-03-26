@@ -982,7 +982,7 @@ export default function DashboardPage() {
           <button onClick={logout} className="flex items-center gap-2 text-gray-500 hover:text-red-400 text-xs transition bg-transparent border-none cursor-pointer w-full px-1">
             <Icon name="logout" size={14} /> Sign Out
           </button>
-          <p className="text-gray-700 text-[0.6rem] mt-3">&copy; 2026 CubeXTech Sdn Bhd</p>
+          <p className="text-gray-700 text-[0.6rem] mt-3">&copy; 2026 CubeXTech Sdn Bhd &middot; v2.1</p>
         </div>
       </aside>
 
