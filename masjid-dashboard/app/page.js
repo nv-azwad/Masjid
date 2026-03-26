@@ -181,7 +181,6 @@ function PrayerManager({ prayers, onRefresh, onToast }) {
                 </span>
                 <div className="flex gap-2 justify-end">
                   <button onClick={() => startEdit(prayer)} className="bg-masjid-green/10 border border-masjid-green/30 text-masjid-green rounded-lg px-2.5 py-1.5 text-xs flex items-center gap-1 hover:bg-masjid-green/20 transition"><Icon name="edit" size={14} /></button>
-                  <button onClick={() => setNext(prayer.id)} className="bg-masjid-gold/10 border border-masjid-gold/30 text-masjid-gold rounded-lg px-2.5 py-1.5 text-xs flex items-center gap-1 hover:bg-masjid-gold/20 transition" title="Set as Next"><Icon name="star" size={14} /></button>
                 </div>
               </>
             )}

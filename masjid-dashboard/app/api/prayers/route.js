@@ -1,13 +1,14 @@
 import { prisma } from '../../../lib/prisma'
 import { requireAuth } from '../../../lib/auth'
 import { validate, prayerUpdateSchema } from '../../../lib/validations'
+import { computeNextPrayer } from '../../../lib/next-prayer'
 import { NextResponse } from 'next/server'
 
 // GET /api/prayers - Get all prayer times (public for mobile app)
 export async function GET() {
   try {
     const prayers = await prisma.prayer.findMany({ orderBy: { order: 'asc' } })
-    return NextResponse.json(prayers)
+    return NextResponse.json(computeNextPrayer(prayers))
   } catch (error) {
     console.error('Database error:', error.message)
     return NextResponse.json({ error: 'Database connection failed' }, { status: 500 })

@@ -1,4 +1,5 @@
 import { prisma } from '../../../lib/prisma'
+import { computeNextPrayer } from '../../../lib/next-prayer'
 import { NextResponse } from 'next/server'
 
 // GET /api/mosque - Get all data the mobile app needs in one call
@@ -11,7 +12,7 @@ export async function GET() {
       prisma.imam.findMany({ orderBy: { order: 'asc' } }),
     ])
 
-    return NextResponse.json({ mosque, prayers, jummah, imams })
+    return NextResponse.json({ mosque, prayers: computeNextPrayer(prayers), jummah, imams })
   } catch (error) {
     console.error('Database error:', error.message)
     return NextResponse.json(
