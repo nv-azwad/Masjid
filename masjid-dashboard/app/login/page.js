@@ -94,7 +94,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-gray-700 text-[0.6rem] text-center mt-6">&copy; 2026 CubeXTech Sdn Bhd</p>
+        <p className="text-gray-700 text-[0.6rem] text-center mt-6">&copy; 2026 Gausul Azam Jameh Mosjid</p>
       </div>
     </div>
   )

@@ -1,6 +1,8 @@
 import { prisma } from '../../../lib/prisma'
 import { NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/keepalive - Lightweight ping to keep Neon DB connection warm
 export async function GET() {
   try {

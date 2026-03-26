@@ -3,6 +3,8 @@ import { requireAuth } from '../../../lib/auth'
 import { validate, jummahUpdateSchema } from '../../../lib/validations'
 import { NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/jummah - public for mobile app
 export async function GET() {
   try {

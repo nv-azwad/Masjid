@@ -5,6 +5,8 @@ import { computeNextPrayer } from '../../../lib/next-prayer'
 import { getCalculatedTimes } from '../../../lib/prayer-times'
 import { NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/prayers - Get all prayer times (public for mobile app)
 export async function GET(request) {
   try {
