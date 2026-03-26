@@ -34,7 +34,7 @@ export const Colors = {
 }
 
 // API base URL - change to your deployed dashboard URL
-export const API_BASE = 'http://192.168.68.100:3000'
+export const API_BASE = 'https://masjid-dun.vercel.app'
 
 // Al Quran API
 export const QURAN_API = 'https://api.alquran.cloud/v1'
