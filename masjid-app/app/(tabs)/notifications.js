@@ -4,9 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../../context/ThemeContext'
 import { API_BASE } from '../../constants/config'
+import { usePreloadedData } from '../_layout'
 
 export default function NotificationsScreen() {
   const { colors, isDark } = useTheme()
+  const { markNotificationsRead } = usePreloadedData() || {}
   const [notifications, setNotifications] = useState([])
   const [refreshing, setRefreshing] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -27,7 +29,11 @@ export default function NotificationsScreen() {
     setLoading(false)
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    load()
+    // Mark all as read when user opens this tab
+    if (markNotificationsRead) markNotificationsRead()
+  }, [load, markNotificationsRead])
 
   const onRefresh = async () => {
     setRefreshing(true)

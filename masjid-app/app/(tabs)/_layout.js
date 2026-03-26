@@ -1,9 +1,12 @@
 import { Tabs } from 'expo-router'
+import { View, Text, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../../context/ThemeContext'
+import { usePreloadedData } from '../_layout'
 
 export default function TabLayout() {
   const { colors, isDark } = useTheme()
+  const { unreadCount } = usePreloadedData() || {}
 
   return (
     <Tabs
@@ -33,7 +36,16 @@ export default function TabLayout() {
         name="notifications"
         options={{
           title: 'Updates',
-          tabBarIcon: ({ color, size }) => <Ionicons name="megaphone" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <View>
+              <Ionicons name="megaphone" size={size} color={color} />
+              {unreadCount > 0 && (
+                <View style={[styles.badge, { backgroundColor: '#ef4444' }]}>
+                  <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+                </View>
+              )}
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
@@ -60,3 +72,22 @@ export default function TabLayout() {
     </Tabs>
   )
 }
+
+const styles = StyleSheet.create({
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -8,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 3,
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 9,
+    fontWeight: '700',
+  },
+})

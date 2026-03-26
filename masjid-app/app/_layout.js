@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, createContext, useContext } from 'react'
 import { View, Text, StyleSheet, Animated, Easing } from 'react-native'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
@@ -10,6 +10,11 @@ import {
   schedulePrayerReminders,
 } from '../services/notifications'
 import { fetchMosqueData } from '../services/api'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+
+// Shared context so preloaded data flows to home screen without re-fetch
+const PreloadContext = createContext(null)
+export function usePreloadedData() { return useContext(PreloadContext) }
 
 function LoaderBar({ color, delay }) {
   const anim = useRef(new Animated.Value(0)).current
@@ -62,26 +67,27 @@ function SplashScreen({ onFinish }) {
       duration: 800,
       useNativeDriver: true,
     }).start()
+  }, [])
 
-    const timer = setTimeout(onFinish, 3000)
-    return () => clearTimeout(timer)
+  // onFinish is called externally when data is ready
+  // but show splash for at least 2 seconds for the animation
+  useEffect(() => {
+    const min = setTimeout(() => {
+      // Mark minimum time passed — parent controls actual dismiss
+    }, 2000)
+    return () => clearTimeout(min)
   }, [])
 
   return (
     <View style={splashStyles.container}>
       <StatusBar style="light" />
       <Animated.View style={[splashStyles.content, { opacity: fadeAnim }]}>
-        {/* Bismillah Arabic */}
         <Text style={splashStyles.bismillahArabic}>
           بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
         </Text>
-
-        {/* English translation */}
         <Text style={splashStyles.bismillahEnglish}>
           In the name of Allah, the Most Gracious, the Most Merciful
         </Text>
-
-        {/* Animated loader bars */}
         <View style={splashStyles.loaderRow}>
           <LoaderBar color="#00ff7f" delay={0} />
           <LoaderBar color="#d4af77" delay={200} />
@@ -129,37 +135,79 @@ const splashStyles = StyleSheet.create({
 function RootLayoutInner() {
   const { isDark, colors } = useTheme()
   const [showSplash, setShowSplash] = useState(true)
+  const [preloadedData, setPreloadedData] = useState(null)
+  const [unreadCount, setUnreadCount] = useState(0)
+  const dataReady = useRef(false)
+  const minTimePassed = useRef(false)
 
-  // Initialize notifications after splash
+  // Preload data during splash screen
   useEffect(() => {
-    if (!showSplash) {
-      initNotifications()
-    }
-  }, [showSplash])
+    const minTimer = setTimeout(() => {
+      minTimePassed.current = true
+      if (dataReady.current) setShowSplash(false)
+    }, 2000)
 
-  async function initNotifications() {
+    // Fetch data in parallel during splash
+    Promise.all([
+      fetchMosqueData().catch(() => null),
+      getNotificationPrefs().catch(() => null),
+      loadUnreadCount(),
+    ]).then(([mosqueData, prefs]) => {
+      if (mosqueData) setPreloadedData(mosqueData)
+      dataReady.current = true
+      if (minTimePassed.current) setShowSplash(false)
+
+      // Init push notifications in background
+      if (prefs?.enabled) {
+        initNotifications(mosqueData, prefs)
+      }
+    })
+
+    return () => clearTimeout(minTimer)
+  }, [])
+
+  async function loadUnreadCount() {
     try {
-      const prefs = await getNotificationPrefs()
-      if (!prefs.enabled) return
+      const lastSeen = await AsyncStorage.getItem('notifications_last_seen')
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), 5000)
+      const res = await fetch(`https://masjid-dun.vercel.app/api/notifications`, { signal: controller.signal })
+      clearTimeout(timer)
+      if (res.ok) {
+        const notifs = await res.json()
+        if (Array.isArray(notifs) && lastSeen) {
+          const count = notifs.filter(n => new Date(n.sentAt) > new Date(lastSeen)).length
+          setUnreadCount(count)
+        } else if (Array.isArray(notifs)) {
+          setUnreadCount(notifs.length)
+        }
+      }
+    } catch {}
+  }
 
+  async function initNotifications(mosqueData, prefs) {
+    try {
       const token = await registerForPushNotifications()
       if (token) await sendTokenToServer(token)
-
-      const data = await fetchMosqueData()
-      if (data?.prayers) {
-        await schedulePrayerReminders(data.prayers, prefs)
+      if (mosqueData?.prayers) {
+        await schedulePrayerReminders(mosqueData.prayers, prefs)
       }
     } catch (e) {
       console.log('Notification init skipped:', e.message)
     }
   }
 
+  const markNotificationsRead = async () => {
+    setUnreadCount(0)
+    await AsyncStorage.setItem('notifications_last_seen', new Date().toISOString())
+  }
+
   if (showSplash) {
-    return <SplashScreen onFinish={() => setShowSplash(false)} />
+    return <SplashScreen />
   }
 
   return (
-    <>
+    <PreloadContext.Provider value={{ preloadedData, unreadCount, markNotificationsRead }}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
@@ -171,7 +219,7 @@ function RootLayoutInner() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="surah/[id]" options={{ headerShown: false }} />
       </Stack>
-    </>
+    </PreloadContext.Provider>
   )
 }
 

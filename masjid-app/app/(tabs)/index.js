@@ -11,10 +11,12 @@ import {
   registerForPushNotifications,
   sendTokenToServer,
 } from '../../services/notifications'
+import { usePreloadedData } from '../_layout'
 
 export default function HomeScreen() {
   const { colors, isDark } = useTheme()
-  const [data, setData] = useState(null)
+  const { preloadedData } = usePreloadedData() || {}
+  const [data, setData] = useState(preloadedData || null)
   const [refreshing, setRefreshing] = useState(false)
   const [notifPrefs, setNotifPrefs] = useState(null)
 
@@ -27,7 +29,15 @@ export default function HomeScreen() {
     setNotifPrefs(prefs)
   }, [])
 
-  useEffect(() => { load() }, [load])
+  // Use preloaded data immediately, then load prefs
+  useEffect(() => {
+    if (preloadedData) {
+      setData(preloadedData)
+      getNotificationPrefs().then(setNotifPrefs)
+    } else {
+      load()
+    }
+  }, [preloadedData, load])
 
   const onRefresh = async () => {
     setRefreshing(true)
