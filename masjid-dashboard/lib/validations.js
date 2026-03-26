@@ -1,23 +1,23 @@
 import { z } from 'zod'
 
-// Reusable patterns
-const timePattern = /^\d{1,2}:\d{2}\s?(AM|PM)$/i
+// Reusable patterns — flexible to match various time formats
+const timePattern = /^\d{1,2}:\d{2}\s?(AM|PM|am|pm)$/
 
 // Prayer validation
 export const prayerUpdateSchema = z.object({
   id: z.string().min(1, 'Prayer ID is required'),
   name: z.string().min(1).max(50).optional(),
-  adhan: z.string().regex(timePattern, 'Invalid time format (e.g. 5:00 AM)').optional().nullable(),
-  time: z.string().regex(timePattern, 'Invalid time format (e.g. 5:15 AM)').optional(),
+  adhan: z.string().max(20).optional().nullable(),
+  time: z.string().max(20).optional(),
   isNext: z.boolean().optional(),
-})
+}).passthrough()
 
 // Imam validation
 export const imamCreateSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
   role: z.string().min(1, 'Role is required').max(100),
-  bio: z.string().max(2000).default(''),
-  contact: z.string().email('Invalid email').max(200).optional().or(z.literal('')),
+  bio: z.string().max(2000).optional().default(''),
+  contact: z.string().max(200).optional().default(''),
 })
 
 export const imamUpdateSchema = z.object({
@@ -25,14 +25,14 @@ export const imamUpdateSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   role: z.string().min(1).max(100).optional(),
   bio: z.string().max(2000).optional(),
-  contact: z.string().email('Invalid email').max(200).optional().or(z.literal('')),
+  contact: z.string().max(200).optional(),
 })
 
 // Jummah validation
 export const jummahUpdateSchema = z.object({
   name: z.string().min(1).max(100).optional(),
-  time: z.string().regex(timePattern, 'Invalid time format (e.g. 1:15 PM)').optional(),
-  khateeb: z.string().min(1).max(200).optional(),
+  time: z.string().max(20).optional(),
+  khateeb: z.string().max(200).optional(),
 })
 
 // Notification validation
