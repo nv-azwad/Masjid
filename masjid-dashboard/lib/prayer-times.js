@@ -1,4 +1,4 @@
-import { Coordinates, PrayerTimes, CalculationMethod, Shafaq } from 'adhan'
+import { Coordinates, PrayerTimes, CalculationMethod, Madhab } from 'adhan'
 
 // Gausul Azam Jameh Mosjid — Road 9, Sector 13, Uttara, Dhaka
 const UTTARA_COORDS = new Coordinates(23.8759, 90.3795)
@@ -6,7 +6,7 @@ const UTTARA_COORDS = new Coordinates(23.8759, 90.3795)
 // Karachi method is standard for Bangladesh (Hanafi)
 function getParams() {
   const params = CalculationMethod.Karachi()
-  params.madhab = 'Hanafi' // Hanafi Asr calculation (shadow = 2x)
+  params.madhab = Madhab.Hanafi
   return params
 }
 

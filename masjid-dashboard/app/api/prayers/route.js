@@ -14,7 +14,9 @@ export async function GET(request) {
     // Include calculated adhan times if requested (dashboard use)
     const { searchParams } = new URL(request.url)
     if (searchParams.get('calculated') === '1') {
-      return NextResponse.json({ prayers: result, calculated: getCalculatedTimes() })
+      let calculated = null
+      try { calculated = getCalculatedTimes() } catch (e) { console.error('Adhan calc error:', e.message) }
+      return NextResponse.json({ prayers: result, calculated })
     }
 
     return NextResponse.json(result)
