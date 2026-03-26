@@ -13,7 +13,10 @@ export default function NotificationsScreen() {
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/notifications`, { signal: AbortSignal.timeout(5000) })
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), 5000)
+      const res = await fetch(`${API_BASE}/api/notifications`, { signal: controller.signal })
+      clearTimeout(timer)
       if (res.ok) {
         const data = await res.json()
         if (Array.isArray(data)) setNotifications(data)
