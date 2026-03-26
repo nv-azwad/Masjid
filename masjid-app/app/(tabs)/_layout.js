@@ -30,6 +30,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="notifications"
+        options={{
+          title: 'Updates',
+          tabBarIcon: ({ color, size }) => <Ionicons name="megaphone" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="quran"
         options={{
           title: 'Quran',
