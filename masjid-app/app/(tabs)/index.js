@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Alert } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Alert, Platform } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../../context/ThemeContext'
@@ -12,6 +12,14 @@ import {
   sendTokenToServer,
 } from '../../services/notifications'
 import { usePreloadedData } from '../_layout'
+
+const showAlert = (title, message) => {
+  if (Platform.OS === 'web') {
+    window.alert(`${title}\n${message}`)
+  } else {
+    Alert.alert(title, message)
+  }
+}
 
 export default function HomeScreen() {
   const { colors, isDark } = useTheme()
@@ -55,7 +63,7 @@ export default function HomeScreen() {
     if (!base.enabled) {
       const token = await registerForPushNotifications()
       if (!token) {
-        Alert.alert(
+        showAlert(
           'Notifications Unavailable',
           'Please enable notification permissions in your device settings.',
         )

@@ -4,6 +4,8 @@ import { checkRateLimit, resetRateLimit } from '../../../../lib/rate-limit'
 import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(request) {
   try {
     // Rate limiting by IP

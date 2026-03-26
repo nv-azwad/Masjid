@@ -2,6 +2,8 @@ import { prisma } from '../../../lib/prisma'
 import { verifyFirebaseToken } from '../../../lib/firebase-admin'
 import { NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 // POST /api/members — Register or login a member after Firebase phone auth
 export async function POST(request) {
   try {

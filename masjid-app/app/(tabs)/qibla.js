@@ -6,28 +6,29 @@ import { useTheme } from '../../context/ThemeContext'
 
 // Qibla bearing from Dhaka, Bangladesh ≈ 282° (West-Northwest)
 const QIBLA_BEARING = 282
+const isWeb = Platform.OS === 'web'
 
 export default function QiblaScreen() {
   const { colors, isDark } = useTheme()
   const [heading, setHeading] = useState(0)
-  const [status, setStatus] = useState('loading') // 'loading' | 'active' | 'denied' | 'unavailable'
+  const [status, setStatus] = useState(isWeb ? 'web' : 'loading')
   const prevHeading = useRef(0)
 
   useEffect(() => {
+    if (isWeb) return // No compass on web
+
     let headingSub
 
     async function startHeading() {
       try {
         const Location = await import('expo-location')
 
-        // Request permission
         const { status: perm } = await Location.requestForegroundPermissionsAsync()
         if (perm !== 'granted') {
           setStatus('denied')
           return
         }
 
-        // Check if heading is available
         const available = await Location.hasServicesEnabledAsync()
         if (!available) {
           setStatus('unavailable')
@@ -36,13 +37,9 @@ export default function QiblaScreen() {
 
         setStatus('active')
 
-        // Watch heading — gives proper compass heading with tilt compensation
         headingSub = await Location.watchHeadingAsync((data) => {
-          // Use trueHeading if available (accounts for magnetic declination)
-          // Fall back to magHeading
           const newHeading = data.trueHeading >= 0 ? data.trueHeading : data.magHeading
 
-          // Smooth the heading
           let diff = newHeading - prevHeading.current
           if (diff > 180) diff -= 360
           if (diff < -180) diff += 360
@@ -214,7 +211,14 @@ export default function QiblaScreen() {
 
       {/* Bottom info */}
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        {status === 'denied' ? (
+        {status === 'web' ? (
+          <View style={[styles.warning, { backgroundColor: colors.green + '15', borderColor: colors.green + '40' }]}>
+            <Ionicons name="information-circle" size={16} color={colors.green} />
+            <Text style={{ color: colors.textSecondary, fontSize: 12, flex: 1, marginLeft: 8 }}>
+              Live compass is not available on web. The Qibla direction from Dhaka is {QIBLA_BEARING}° (West-Northwest). Use a physical compass or the mobile app for real-time guidance.
+            </Text>
+          </View>
+        ) : status === 'denied' ? (
           <View style={[styles.warning, { backgroundColor: colors.gold + '15', borderColor: colors.gold + '40' }]}>
             <Ionicons name="alert-circle" size={16} color={colors.gold} />
             <Text style={{ color: colors.gold, fontSize: 12, flex: 1, marginLeft: 8 }}>

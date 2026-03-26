@@ -3,6 +3,8 @@ import { requireAuth } from '../../../lib/auth'
 import { validate, notificationSchema } from '../../../lib/validations'
 import { NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/notifications - public (used by dashboard)
 export async function GET() {
   try {

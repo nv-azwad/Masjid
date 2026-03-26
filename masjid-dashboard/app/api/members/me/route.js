@@ -2,6 +2,8 @@ import { prisma } from '../../../../lib/prisma'
 import { verifyFirebaseToken } from '../../../../lib/firebase-admin'
 import { NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/members/me — Get current member's profile
 export async function GET(request) {
   try {

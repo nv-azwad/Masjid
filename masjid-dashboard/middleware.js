@@ -18,9 +18,16 @@ export function middleware(request) {
     return NextResponse.next()
   }
 
-  // Allow CORS preflight requests
+  // Allow CORS preflight requests with proper headers
   if (request.method === 'OPTIONS') {
-    return new NextResponse(null, { status: 204 })
+    return new NextResponse(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      },
+    })
   }
 
   const publicGetApis = ['/api/prayers', '/api/imams', '/api/jummah', '/api/mosque', '/api/notifications', '/api/keepalive']

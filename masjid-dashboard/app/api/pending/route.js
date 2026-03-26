@@ -3,6 +3,8 @@ import { requireAuth, requireAdmin } from '../../../lib/auth'
 import { validate, pendingReviewSchema } from '../../../lib/validations'
 import { NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/pending - Get pending changes
 export async function GET(request) {
   try {

@@ -17,14 +17,14 @@ const JAMAAT_OFFSETS = {
   isha: 20,
 }
 
-// Format a Date object to "h:mm AM/PM"
+// Format a Date object to "h:mm AM/PM" in Dhaka timezone
 function formatTime(date) {
-  let hours = date.getHours()
-  const minutes = date.getMinutes()
-  const ampm = hours >= 12 ? 'PM' : 'AM'
-  hours = hours % 12 || 12
-  const mins = minutes < 10 ? '0' + minutes : minutes
-  return `${hours}:${mins} ${ampm}`
+  return date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZone: 'Asia/Dhaka',
+  })
 }
 
 // Add minutes to a Date and format

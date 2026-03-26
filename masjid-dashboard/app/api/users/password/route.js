@@ -4,6 +4,8 @@ import { validate, passwordChangeSchema } from '../../../../lib/validations'
 import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 
+export const dynamic = 'force-dynamic'
+
 // PUT /api/users/password - Change own password
 export async function PUT(request) {
   try {

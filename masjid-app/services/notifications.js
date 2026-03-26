@@ -22,6 +22,9 @@ const DEFAULT_PREFS = {
 
 export async function registerForPushNotifications() {
   try {
+    // Push notifications not supported on web
+    if (Platform.OS === 'web') return null
+
     const Notifications = await import('expo-notifications')
     const Device = await import('expo-device')
 
@@ -116,6 +119,9 @@ export async function saveNotificationPrefs(prefs) {
 
 export async function schedulePrayerReminders(prayers, prefs) {
   try {
+    // Local notifications not supported on web
+    if (Platform.OS === 'web') return
+
     const Notifications = await import('expo-notifications')
 
     // Cancel all existing scheduled notifications

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { View, Text, ScrollView, Switch, StyleSheet, Alert } from 'react-native'
+import { View, Text, ScrollView, Switch, StyleSheet, Alert, Platform } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../../context/ThemeContext'
@@ -16,6 +16,14 @@ import { fetchMosqueData } from '../../services/api'
 
 export default function SettingsScreen() {
   const { colors, isDark, toggleTheme } = useTheme()
+
+  const showAlert = (title, message) => {
+    if (Platform.OS === 'web') {
+      window.alert(`${title}\n${message}`)
+    } else {
+      Alert.alert(title, message)
+    }
+  }
   const [notificationsOn, setNotificationsOn] = useState(false)
   const [togglingNotif, setTogglingNotif] = useState(false)
 
@@ -43,6 +51,19 @@ export default function SettingsScreen() {
       await saveNotificationPrefs(prefs)
 
       if (value) {
+        // Push notifications not available on web
+        if (Platform.OS === 'web') {
+          prefs.enabled = false
+          await saveNotificationPrefs(prefs)
+          setNotificationsOn(false)
+          showAlert(
+            'Not Available on Web',
+            'Push notifications are only available on the mobile app.',
+          )
+          setTogglingNotif(false)
+          return
+        }
+
         // Enable: register push token + schedule reminders
         const token = await registerForPushNotifications()
         if (token) {
@@ -52,7 +73,7 @@ export default function SettingsScreen() {
           prefs.enabled = false
           await saveNotificationPrefs(prefs)
           setNotificationsOn(false)
-          Alert.alert(
+          showAlert(
             'Notifications Unavailable',
             'Please enable notification permissions in your device settings.',
           )

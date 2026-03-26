@@ -3,6 +3,8 @@ import { requireAuth } from '../../../lib/auth'
 import { validate, imamCreateSchema, imamUpdateSchema } from '../../../lib/validations'
 import { NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/imams - public for mobile app
 export async function GET() {
   try {

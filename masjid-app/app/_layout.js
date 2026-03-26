@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, createContext, useContext } from 'react'
-import { View, Text, StyleSheet, Animated, Easing } from 'react-native'
+import { View, Text, StyleSheet, Animated, Easing, Platform } from 'react-native'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { ThemeProvider, useTheme } from '../context/ThemeContext'
@@ -65,7 +65,7 @@ function SplashScreen({ onFinish }) {
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 800,
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start()
   }, [])
 
@@ -157,8 +157,8 @@ function RootLayoutInner() {
       dataReady.current = true
       if (minTimePassed.current) setShowSplash(false)
 
-      // Init push notifications in background
-      if (prefs?.enabled) {
+      // Init push notifications in background (native only)
+      if (prefs?.enabled && Platform.OS !== 'web') {
         initNotifications(mosqueData, prefs)
       }
     })

@@ -2,6 +2,8 @@ import { prisma } from '../../../lib/prisma'
 import { verifyFirebaseToken } from '../../../lib/firebase-admin'
 import { NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 // POST /api/push-tokens — Register or reactivate a push token
 export async function POST(request) {
   try {

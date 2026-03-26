@@ -4,6 +4,8 @@ import { validate, userCreateSchema } from '../../../lib/validations'
 import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/users - List all users (admin only)
 export async function GET(request) {
   try {
