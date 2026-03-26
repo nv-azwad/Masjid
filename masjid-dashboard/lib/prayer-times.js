@@ -39,13 +39,13 @@ export function getCalculatedTimes() {
   }
 }
 
-// Default jamaat offset (minutes after adhan)
+// Jamaat offset (minutes after adhan) — typical for Bangladesh mosques
 const JAMAAT_OFFSETS = {
-  Fajr: 15,
-  Dhuhr: 15,
-  Asr: 15,
-  Maghrib: 5,
-  Isha: 15,
+  Fajr: 25,     // people need time to arrive early morning
+  Dhuhr: 20,    // midday, standard gap
+  Asr: 20,      // afternoon, standard gap
+  Maghrib: 7,   // short gap — just enough for sunnah after sunset
+  Isha: 20,     // evening, standard gap
 }
 
 // Get both adhan and jamaat times for daily auto-update

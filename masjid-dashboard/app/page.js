@@ -222,11 +222,29 @@ function PrayerManager({ prayers, onRefresh, onToast }) {
     await onRefresh()
   }
 
+  const [syncing, setSyncing] = useState(false)
+  const syncCalculated = async () => {
+    setSyncing(true)
+    const result = await api.post('/api/prayers')
+    if (result.error) {
+      onToast(result.error, 'error')
+    } else {
+      onToast('Prayer times synced with calculated times', 'success')
+      await onRefresh()
+    }
+    setSyncing(false)
+  }
+
   return (
     <div>
       <div className="flex justify-between items-center mb-5">
-        <h2 className="text-white text-xl font-semibold">Prayer Times</h2>
-        {calculated && <span className="text-xs text-gray-500">Calculated adhan times for Uttara, Dhaka (Hanafi)</span>}
+        <div>
+          <h2 className="text-white text-xl font-semibold">Prayer Times</h2>
+          {calculated && <p className="text-xs text-gray-500 mt-1">Calculated for Uttara, Dhaka (Karachi method, Hanafi)</p>}
+        </div>
+        <button onClick={syncCalculated} disabled={syncing} className="bg-masjid-gold/20 border border-masjid-gold/40 text-masjid-gold px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 hover:bg-masjid-gold/30 transition disabled:opacity-50">
+          <Icon name="refresh-cw" size={14} /> {syncing ? 'Syncing...' : 'Sync Calculated Times'}
+        </button>
       </div>
       <div className="bg-masjid-card rounded-xl overflow-hidden border border-masjid-border">
         <div className="grid grid-cols-[1fr_1fr_1fr_80px_140px] px-5 py-3 bg-masjid-bg border-b border-masjid-border text-xs text-gray-500 font-semibold uppercase tracking-wider">

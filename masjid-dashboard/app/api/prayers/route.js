@@ -2,7 +2,8 @@ import { prisma } from '../../../lib/prisma'
 import { requireAuth } from '../../../lib/auth'
 import { validate, prayerUpdateSchema } from '../../../lib/validations'
 import { computeNextPrayer } from '../../../lib/next-prayer'
-import { getCalculatedTimes } from '../../../lib/prayer-times'
+import { getCalculatedTimes, getFullPrayerSchedule } from '../../../lib/prayer-times'
+import { requireAdmin } from '../../../lib/auth'
 import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
@@ -74,5 +75,36 @@ export async function PUT(request) {
   } catch (error) {
     console.error('Database error:', error.message)
     return NextResponse.json({ error: 'Failed to update prayer' }, { status: 500 })
+  }
+}
+
+// POST /api/prayers - Sync all prayers with calculated times (admin only)
+export async function POST(request) {
+  try {
+    const admin = await requireAdmin(request)
+    if (!admin) return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+
+    const schedule = getFullPrayerSchedule()
+    const prayers = await prisma.prayer.findMany({ orderBy: { order: 'asc' } })
+
+    const updates = []
+    for (const prayer of prayers) {
+      const calc = schedule[prayer.name]
+      if (calc) {
+        updates.push(
+          prisma.prayer.update({
+            where: { id: prayer.id },
+            data: { adhan: calc.adhan, time: calc.jamaat },
+          })
+        )
+      }
+    }
+
+    await Promise.all(updates)
+
+    return NextResponse.json({ ok: true, schedule })
+  } catch (error) {
+    console.error('Sync error:', error.message)
+    return NextResponse.json({ error: 'Failed to sync prayer times' }, { status: 500 })
   }
 }
