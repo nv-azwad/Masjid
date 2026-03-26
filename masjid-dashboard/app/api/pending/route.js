@@ -5,30 +5,35 @@ import { NextResponse } from 'next/server'
 
 // GET /api/pending - Get pending changes
 export async function GET(request) {
-  const user = await requireAuth(request)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  try {
+    const user = await requireAuth(request)
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const where = user.role === 'ADMIN' ? {} : { submittedBy: user.id }
+    const where = user.role === 'ADMIN' ? {} : { submittedBy: user.id }
 
-  const changes = await prisma.pendingChange.findMany({
-    where,
-    include: {
-      submitter: { select: { id: true, name: true, email: true, role: true } },
-      reviewer: { select: { id: true, name: true } },
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 50,
-  })
+    const changes = await prisma.pendingChange.findMany({
+      where,
+      include: {
+        submitter: { select: { id: true, name: true, email: true, role: true } },
+        reviewer: { select: { id: true, name: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    })
 
-  return NextResponse.json(changes)
+    return NextResponse.json(changes)
+  } catch (error) {
+    console.error('Pending changes error:', error.message)
+    return NextResponse.json({ error: 'Failed to load pending changes' }, { status: 500 })
+  }
 }
 
 // PUT /api/pending - Approve or deny a pending change (admin only)
 export async function PUT(request) {
-  const admin = await requireAdmin(request)
-  if (!admin) return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
-
   try {
+    const admin = await requireAdmin(request)
+    if (!admin) return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+
     const body = await request.json()
     const { success, data, error } = validate(pendingReviewSchema, body)
     if (!success) return NextResponse.json({ error }, { status: 400 })

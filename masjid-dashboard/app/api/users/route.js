@@ -6,23 +6,28 @@ import bcrypt from 'bcryptjs'
 
 // GET /api/users - List all users (admin only)
 export async function GET(request) {
-  const admin = await requireAdmin(request)
-  if (!admin) return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+  try {
+    const admin = await requireAdmin(request)
+    if (!admin) return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
 
-  const users = await prisma.user.findMany({
-    select: { id: true, email: true, name: true, role: true, createdAt: true },
-    orderBy: { createdAt: 'asc' },
-  })
+    const users = await prisma.user.findMany({
+      select: { id: true, email: true, name: true, role: true, createdAt: true },
+      orderBy: { createdAt: 'asc' },
+    })
 
-  return NextResponse.json(users)
+    return NextResponse.json(users)
+  } catch (error) {
+    console.error('Users error:', error.message)
+    return NextResponse.json({ error: 'Failed to load users' }, { status: 500 })
+  }
 }
 
 // POST /api/users - Create a new user (admin only)
 export async function POST(request) {
-  const admin = await requireAdmin(request)
-  if (!admin) return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
-
   try {
+    const admin = await requireAdmin(request)
+    if (!admin) return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+
     const body = await request.json()
     const { success, data, error } = validate(userCreateSchema, body)
     if (!success) return NextResponse.json({ error }, { status: 400 })
@@ -48,10 +53,10 @@ export async function POST(request) {
 
 // DELETE /api/users - Delete a user (admin only)
 export async function DELETE(request) {
-  const admin = await requireAdmin(request)
-  if (!admin) return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
-
   try {
+    const admin = await requireAdmin(request)
+    if (!admin) return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
 

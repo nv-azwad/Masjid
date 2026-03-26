@@ -18,10 +18,10 @@ export async function GET() {
 }
 
 export async function POST(request) {
-  const user = await requireAuth(request)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
   try {
+    const user = await requireAuth(request)
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
     const body = await request.json()
     const { success, data, error } = validate(notificationSchema, body)
     if (!success) return NextResponse.json({ error }, { status: 400 })
@@ -71,7 +71,6 @@ async function sendExpoPush(tokens, title, body) {
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify(batch),
       })
-
       const data = await res.json()
       if (data.data) {
         const invalid = []

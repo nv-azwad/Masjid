@@ -15,10 +15,10 @@ export async function GET() {
 }
 
 export async function PUT(request) {
-  const user = await requireAuth(request)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
   try {
+    const user = await requireAuth(request)
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
     const body = await request.json()
     const { success, data, error } = validate(jummahUpdateSchema, body)
     if (!success) return NextResponse.json({ error }, { status: 400 })

@@ -6,10 +6,10 @@ import bcrypt from 'bcryptjs'
 
 // PUT /api/users/password - Change own password
 export async function PUT(request) {
-  const user = await requireAuth(request)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
   try {
+    const user = await requireAuth(request)
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
     const body = await request.json()
     const { success, data, error } = validate(passwordChangeSchema, body)
     if (!success) return NextResponse.json({ error }, { status: 400 })

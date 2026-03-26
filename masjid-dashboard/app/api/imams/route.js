@@ -15,10 +15,10 @@ export async function GET() {
 }
 
 export async function POST(request) {
-  const user = await requireAuth(request)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
   try {
+    const user = await requireAuth(request)
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
     const body = await request.json()
     const { success, data, error } = validate(imamCreateSchema, body)
     if (!success) return NextResponse.json({ error }, { status: 400 })
@@ -45,10 +45,10 @@ export async function POST(request) {
 }
 
 export async function PUT(request) {
-  const user = await requireAuth(request)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
   try {
+    const user = await requireAuth(request)
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
     const body = await request.json()
     const { success, data, error } = validate(imamUpdateSchema, body)
     if (!success) return NextResponse.json({ error }, { status: 400 })
@@ -77,10 +77,10 @@ export async function PUT(request) {
 }
 
 export async function DELETE(request) {
-  const user = await requireAuth(request)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
   try {
+    const user = await requireAuth(request)
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
 
@@ -103,6 +103,6 @@ export async function DELETE(request) {
     return NextResponse.json({ pending: true, message: 'Deletion submitted for admin approval', pendingChange: pending })
   } catch (error) {
     console.error('Database error:', error.message)
-    return NextResponse.json({ error: 'Failed to delete imam' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to process imam request' }, { status: 500 })
   }
 }
