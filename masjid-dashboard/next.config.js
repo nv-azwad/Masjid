@@ -1,17 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   async headers() {
-    const allowedOrigin = process.env.ALLOWED_ORIGIN || 'http://localhost:3000'
-
     return [
       // CORS for API routes (mobile app access)
       {
         source: '/api/:path*',
         headers: [
-          { key: 'Access-Control-Allow-Origin', value: allowedOrigin },
+          // Allow any origin for GET (public data), credentials handle auth for mutations
+          { key: 'Access-Control-Allow-Origin', value: '*' },
           { key: 'Access-Control-Allow-Methods', value: 'GET,POST,PUT,DELETE,OPTIONS' },
           { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
-          { key: 'Access-Control-Allow-Credentials', value: 'true' },
         ],
       },
       // Security headers for all routes

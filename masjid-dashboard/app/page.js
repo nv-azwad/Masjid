@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -134,6 +134,39 @@ function Overview({ prayers, imams, loading, pendingCount, userRole }) {
 }
 
 // ── Prayer Times Manager ──
+// Time picker: structured hour:minute AM/PM selects instead of free text
+function TimePicker({ value, onChange, label }) {
+  // Parse "4:30 PM" → { hour: '4', minute: '30', period: 'PM' }
+  const parsed = useMemo(() => {
+    const m = (value || '').match(/^(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)$/i)
+    if (m) return { hour: m[1], minute: m[2].padStart(2, '0'), period: m[3].toUpperCase() }
+    return { hour: '12', minute: '00', period: 'PM' }
+  }, [value])
+
+  const update = (field, val) => {
+    const next = { ...parsed, [field]: val }
+    onChange(`${next.hour}:${next.minute} ${next.period}`)
+  }
+
+  const inputCls = "bg-masjid-bg border border-masjid-border rounded-lg px-2 py-2 text-white text-sm text-center focus:border-masjid-green outline-none"
+
+  return (
+    <div className="flex items-center gap-1 mr-2">
+      <select className={inputCls + " w-16"} value={parsed.hour} onChange={e => update('hour', e.target.value)}>
+        {Array.from({ length: 12 }, (_, i) => i + 1).map(h => <option key={h} value={String(h)}>{String(h)}</option>)}
+      </select>
+      <span className="text-gray-400 font-bold">:</span>
+      <select className={inputCls + " w-16"} value={parsed.minute} onChange={e => update('minute', e.target.value)}>
+        {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(m => <option key={m} value={m}>{m}</option>)}
+      </select>
+      <select className={inputCls + " w-16"} value={parsed.period} onChange={e => update('period', e.target.value)}>
+        <option value="AM">AM</option>
+        <option value="PM">PM</option>
+      </select>
+    </div>
+  )
+}
+
 function PrayerManager({ prayers, onRefresh, onToast }) {
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState({ name: '', adhan: '', time: '' })
@@ -180,8 +213,8 @@ function PrayerManager({ prayers, onRefresh, onToast }) {
             {editing === prayer.id ? (
               <>
                 <input className="bg-masjid-bg border border-masjid-border rounded-lg px-3 py-2 text-white text-sm mr-2 focus:border-masjid-green outline-none" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Prayer name" />
-                <input className="bg-masjid-bg border border-masjid-border rounded-lg px-3 py-2 text-white text-sm mr-2 focus:border-masjid-green outline-none" value={form.adhan} onChange={e => setForm({ ...form, adhan: e.target.value })} placeholder="Adhan time" />
-                <input className="bg-masjid-bg border border-masjid-border rounded-lg px-3 py-2 text-white text-sm mr-2 focus:border-masjid-green outline-none" value={form.time} onChange={e => setForm({ ...form, time: e.target.value })} placeholder="Jamaat time" />
+                <TimePicker value={form.adhan} onChange={v => setForm({ ...form, adhan: v })} />
+                <TimePicker value={form.time} onChange={v => setForm({ ...form, time: v })} />
                 <span />
                 <div className="flex gap-2 justify-end">
                   <button onClick={() => save(prayer.id)} disabled={saving} className="bg-masjid-green text-masjid-dark px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 disabled:opacity-50">
@@ -249,12 +282,16 @@ function JummahManager({ jummah, onRefresh, onToast }) {
       <div className="bg-masjid-card rounded-xl p-6 border border-masjid-border">
         {editing ? (
           <div className="flex flex-col gap-4">
-            {[['Prayer Name', 'name'], ['Prayer Time', 'time'], ['Khateeb', 'khateeb']].map(([label, key]) => (
+            {[['Prayer Name', 'name'], ['Khateeb', 'khateeb']].map(([label, key]) => (
               <div key={key}>
                 <label className="block text-masjid-gold text-xs mb-1.5 font-medium">{label}</label>
                 <input className="w-full bg-masjid-bg border border-masjid-border rounded-lg px-4 py-2.5 text-white text-sm outline-none focus:border-masjid-green" value={form[key] || ''} onChange={e => setForm({ ...form, [key]: e.target.value })} />
               </div>
             ))}
+            <div>
+              <label className="block text-masjid-gold text-xs mb-1.5 font-medium">Prayer Time</label>
+              <TimePicker value={form.time} onChange={v => setForm({ ...form, time: v })} />
+            </div>
             <div className="flex gap-3 mt-2">
               <button onClick={save} disabled={saving} className="bg-masjid-green text-masjid-dark px-5 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 disabled:opacity-50"><Icon name="save" size={16} /> {saving ? 'Saving...' : 'Save'}</button>
               <button onClick={() => { setForm({ name: jummah?.name || '', time: jummah?.time || '', khateeb: jummah?.khateeb || '' }); setEditing(false) }} className="border border-masjid-border text-gray-400 px-5 py-2.5 rounded-lg text-sm bg-transparent">Cancel</button>
