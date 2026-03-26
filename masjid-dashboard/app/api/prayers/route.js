@@ -2,13 +2,22 @@ import { prisma } from '../../../lib/prisma'
 import { requireAuth } from '../../../lib/auth'
 import { validate, prayerUpdateSchema } from '../../../lib/validations'
 import { computeNextPrayer } from '../../../lib/next-prayer'
+import { getCalculatedTimes } from '../../../lib/prayer-times'
 import { NextResponse } from 'next/server'
 
 // GET /api/prayers - Get all prayer times (public for mobile app)
-export async function GET() {
+export async function GET(request) {
   try {
     const prayers = await prisma.prayer.findMany({ orderBy: { order: 'asc' } })
-    return NextResponse.json(computeNextPrayer(prayers))
+    const result = computeNextPrayer(prayers)
+
+    // Include calculated adhan times if requested (dashboard use)
+    const { searchParams } = new URL(request.url)
+    if (searchParams.get('calculated') === '1') {
+      return NextResponse.json({ prayers: result, calculated: getCalculatedTimes() })
+    }
+
+    return NextResponse.json(result)
   } catch (error) {
     console.error('Database error:', error.message)
     return NextResponse.json({ error: 'Database connection failed' }, { status: 500 })

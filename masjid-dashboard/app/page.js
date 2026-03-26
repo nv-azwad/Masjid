@@ -12,14 +12,21 @@ import { useRouter } from 'next/navigation'
 async function apiCall(url, options = {}) {
   try {
     const res = await fetch(url, { credentials: 'include', ...options })
-    const data = await res.json()
+    const text = await res.text()
+    let data
+    try {
+      data = JSON.parse(text)
+    } catch {
+      console.error('Non-JSON response:', res.status, text.slice(0, 200))
+      return { error: `Server error (${res.status}) — try refreshing the page` }
+    }
     if (!res.ok && !data.error) {
       return { error: `Request failed (${res.status})` }
     }
     return data
   } catch (e) {
     console.error('API error:', e)
-    return { error: 'Network error — please try again' }
+    return { error: 'Network error — check your connection and try again' }
   }
 }
 
@@ -171,9 +178,23 @@ function PrayerManager({ prayers, onRefresh, onToast }) {
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState({ name: '', adhan: '', time: '' })
   const [saving, setSaving] = useState(false)
+  const [calculated, setCalculated] = useState(null)
+
+  // Load calculated adhan times for Uttara, Dhaka
+  useEffect(() => {
+    api.get('/api/prayers?calculated=1').then(data => {
+      if (data.calculated) setCalculated(data.calculated)
+    })
+  }, [])
 
   const startEdit = (p) => { setEditing(p.id); setForm({ name: p.name, adhan: p.adhan || '', time: p.time }) }
   const cancel = () => { setEditing(null); setForm({ name: '', adhan: '', time: '' }) }
+
+  const useCalculated = (prayerName) => {
+    if (!calculated) return
+    const adhanTime = calculated[prayerName]
+    if (adhanTime) setForm(f => ({ ...f, adhan: adhanTime }))
+  }
 
   const save = async (id) => {
     setSaving(true)
@@ -203,7 +224,10 @@ function PrayerManager({ prayers, onRefresh, onToast }) {
 
   return (
     <div>
-      <h2 className="text-white text-xl font-semibold mb-5">Prayer Times</h2>
+      <div className="flex justify-between items-center mb-5">
+        <h2 className="text-white text-xl font-semibold">Prayer Times</h2>
+        {calculated && <span className="text-xs text-gray-500">Calculated adhan times for Uttara, Dhaka (Hanafi)</span>}
+      </div>
       <div className="bg-masjid-card rounded-xl overflow-hidden border border-masjid-border">
         <div className="grid grid-cols-[1fr_1fr_1fr_80px_140px] px-5 py-3 bg-masjid-bg border-b border-masjid-border text-xs text-gray-500 font-semibold uppercase tracking-wider">
           <span>Prayer</span><span>Adhan</span><span>Jamaat</span><span>Status</span><span className="text-right">Actions</span>
@@ -213,7 +237,14 @@ function PrayerManager({ prayers, onRefresh, onToast }) {
             {editing === prayer.id ? (
               <>
                 <input className="bg-masjid-bg border border-masjid-border rounded-lg px-3 py-2 text-white text-sm mr-2 focus:border-masjid-green outline-none" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Prayer name" />
-                <TimePicker value={form.adhan} onChange={v => setForm({ ...form, adhan: v })} />
+                <div className="flex flex-col gap-1">
+                  <TimePicker value={form.adhan} onChange={v => setForm({ ...form, adhan: v })} />
+                  {calculated && calculated[prayer.name] && (
+                    <button onClick={() => useCalculated(prayer.name)} className="text-[0.6rem] text-masjid-gold hover:text-masjid-green transition" type="button">
+                      Use calculated: {calculated[prayer.name]}
+                    </button>
+                  )}
+                </div>
                 <TimePicker value={form.time} onChange={v => setForm({ ...form, time: v })} />
                 <span />
                 <div className="flex gap-2 justify-end">
@@ -226,7 +257,12 @@ function PrayerManager({ prayers, onRefresh, onToast }) {
             ) : (
               <>
                 <span className="text-white font-medium">{prayer.name}</span>
-                <span className="text-gray-400">{prayer.adhan || '—'}</span>
+                <div>
+                  <span className="text-gray-400">{prayer.adhan || '—'}</span>
+                  {calculated && calculated[prayer.name] && (
+                    <div className="text-[0.6rem] text-masjid-gold/60">calc: {calculated[prayer.name]}</div>
+                  )}
+                </div>
                 <span className="text-gray-400">{prayer.time}</span>
                 <span>
                   {prayer.isNext
