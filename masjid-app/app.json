@@ -15,7 +15,11 @@
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#0f1210"
       },
-      "package": "com.trinovent.gausulazam"
+      "package": "com.trinovent.gausulazam",
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "ios": {
       "bundleIdentifier": "com.trinovent.gausulazam",
@@ -31,7 +35,15 @@
       "expo-sensors",
       "expo-notifications",
       "expo-location",
-      "expo-asset"
-    ]
+      "expo-asset",
+      "expo-font"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "f9b01943-395a-43e3-9266-0f68a31bd6d5"
+      }
+    },
+    "owner": "nv-azwad"
   }
 }
