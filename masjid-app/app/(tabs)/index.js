@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Alert, Platform } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Alert, Platform, Image } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../../context/ThemeContext'
@@ -115,9 +115,7 @@ export default function HomeScreen() {
         {/* Header */}
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.headerRow}>
-            <View style={[styles.iconBox, { backgroundColor: colors.green }]}>
-              <Ionicons name="business" size={24} color={isDark ? '#0f1210' : '#fff'} />
-            </View>
+            <Image source={require('../../assets/icon.png')} style={{ width: 44, height: 44, borderRadius: 10 }} />
             <View style={{ flex: 1 }}>
               <Text style={[styles.mosqueName, { color: colors.gold }]}>{data.mosque?.name || 'Gausul Azam Jameh Mosjid'}</Text>
               <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>{data.mosque?.address || 'Road 9, Sector 13, Uttara, Dhaka'}</Text>

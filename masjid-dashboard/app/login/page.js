@@ -42,11 +42,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-masjid-green rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0f1210" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2C8 6 4 8 4 12v8h16v-8c0-4-4-6-8-10z"/><rect x="9" y="16" width="6" height="4"/>
-            </svg>
-          </div>
+          <img src="/icon.png" alt="Gausul Azam Jameh Mosjid" className="w-16 h-16 rounded-2xl mx-auto mb-4" />
           <h1 className="text-masjid-gold text-xl font-bold">Gausul Azam Jameh Mosjid</h1>
           <p className="text-gray-600 text-sm mt-1">Admin Dashboard</p>
         </div>

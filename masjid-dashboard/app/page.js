@@ -967,7 +967,7 @@ export default function DashboardPage() {
       <aside className="bg-masjid-bg border-r border-masjid-border flex flex-col flex-shrink-0 transition-all duration-300 overflow-hidden" style={{ width: sidebar ? 260 : 0 }}>
         <div className="p-5 border-b border-masjid-border whitespace-nowrap">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-masjid-green rounded-lg flex items-center justify-center flex-shrink-0"><Icon name="mosque" size={22} className="text-masjid-dark" /></div>
+            <img src="/icon.png" alt="Logo" className="w-10 h-10 rounded-lg flex-shrink-0" />
             <div>
               <h1 className="text-masjid-gold font-bold text-sm">Gausul Azam Mosjid</h1>
               <p className="text-gray-600 text-[0.6rem]">Uttara, Dhaka</p>
