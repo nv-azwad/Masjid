@@ -99,6 +99,15 @@ model PushToken {
   updatedAt DateTime @updatedAt
 }
 
+// Track unique app installs/opens — one row per device
+model AppInstall {
+  id         String   @id @default(cuid())
+  deviceId   String   @unique // random UUID generated on first app open
+  platform   String   @default("android") // android, ios, web
+  lastSeenAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+}
+
 // Community members (mosque attendees) - separate from admin User model
 model Member {
   id          String   @id @default(cuid())

@@ -10,6 +10,7 @@ import {
   schedulePrayerReminders,
 } from '../services/notifications'
 import { fetchMosqueData } from '../services/api'
+import { API_BASE } from '../constants/config'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 // Shared context so preloaded data flows to home screen without re-fetch
@@ -140,6 +141,23 @@ const splashStyles = StyleSheet.create({
   },
 })
 
+// Generate and persist a unique device ID for install tracking
+async function trackAppOpen() {
+  try {
+    let deviceId = await AsyncStorage.getItem('device_id')
+    if (!deviceId) {
+      deviceId = 'dev_' + Math.random().toString(36).slice(2) + Date.now().toString(36)
+      await AsyncStorage.setItem('device_id', deviceId)
+    }
+    const platform = Platform.OS // 'android', 'ios', or 'web'
+    fetch(`${API_BASE}/api/app-open`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deviceId, platform }),
+    }).catch(() => {}) // fire and forget
+  } catch {}
+}
+
 function RootLayoutInner() {
   const { isDark, colors } = useTheme()
   const [showSplash, setShowSplash] = useState(true)
@@ -154,6 +172,9 @@ function RootLayoutInner() {
       minTimePassed.current = true
       if (dataReady.current) setShowSplash(false)
     }, 2000)
+
+    // Track app open (fire and forget)
+    trackAppOpen()
 
     // Fetch data in parallel during splash
     Promise.all([

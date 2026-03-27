@@ -86,10 +86,10 @@ function Icon({ name, size = 20, className = '' }) {
 // ── Dashboard Overview ──
 function Overview({ prayers, imams, loading, pendingCount, userRole, appStats }) {
   const stats = [
-    { label: 'Active Users', value: appStats?.activeUsers ?? '—', icon: 'bell', color: 'green' },
-    { label: 'Total Installs', value: appStats?.totalInstalls ?? '—', icon: 'user', color: 'gold' },
-    { label: 'Prayer Times', value: prayers.length, icon: 'clock', color: 'green' },
-    { label: userRole === 'ADMIN' ? 'Pending Approvals' : 'Imam Profiles', value: userRole === 'ADMIN' ? pendingCount : imams.length, icon: userRole === 'ADMIN' ? 'shield' : 'user', color: 'gold' },
+    { label: 'Total Installs', value: appStats?.totalInstalls ?? '—', icon: 'user', color: 'green' },
+    { label: 'Active (7 days)', value: appStats?.activeUsers ?? '—', icon: 'bell', color: 'gold' },
+    { label: 'Notifications On', value: appStats?.notificationsEnabled ?? '—', icon: 'send', color: 'green' },
+    { label: userRole === 'ADMIN' ? 'Pending Approvals' : 'Prayer Times', value: userRole === 'ADMIN' ? pendingCount : prayers.length, icon: userRole === 'ADMIN' ? 'shield' : 'clock', color: 'gold' },
   ]
 
   return (

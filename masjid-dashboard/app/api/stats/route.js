@@ -10,15 +10,20 @@ export async function GET(request) {
     const user = await requireAuth(request)
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const [activeTokens, totalTokens, notificationCount] = await Promise.all([
+    // "Active" = opened app in the last 7 days
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+
+    const [totalInstalls, activeUsers, notificationsEnabled, notificationCount] = await Promise.all([
+      prisma.appInstall.count(),
+      prisma.appInstall.count({ where: { lastSeenAt: { gte: sevenDaysAgo } } }),
       prisma.pushToken.count({ where: { active: true } }),
-      prisma.pushToken.count(),
       prisma.notification.count(),
     ])
 
     return NextResponse.json({
-      activeUsers: activeTokens,
-      totalInstalls: totalTokens,
+      totalInstalls,
+      activeUsers,
+      notificationsEnabled,
       notificationsSent: notificationCount,
     })
   } catch (error) {
