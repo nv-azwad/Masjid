@@ -48,8 +48,10 @@ export async function registerForPushNotifications() {
     }
 
     // Get Expo push token
+    const Constants = await import('expo-constants')
+    const projectId = Constants.default.expoConfig?.extra?.eas?.projectId
     const tokenData = await Notifications.getExpoPushTokenAsync({
-      projectId: undefined, // Uses project from app.json
+      projectId,
     })
     const token = tokenData.data
 
