@@ -1,6 +1,6 @@
 import { Coordinates, PrayerTimes, CalculationMethod, Madhab } from 'adhan'
 
-// Gausul Azam Jameh Mosjid — Road 9, Sector 13, Uttara, Dhaka
+// Gausul Azam Jameh Masjid — Road 9, Sector 13, Uttara, Dhaka
 const UTTARA_COORDS = new Coordinates(23.8759, 90.3795)
 
 // Karachi method is standard for Bangladesh (Hanafi)

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// Gausul Azam Jameh Mosjid — Management Dashboard
+// Gausul Azam Jameh Masjid — Management Dashboard
 // Road 9, Sector 13, Uttara, Dhaka
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -969,7 +969,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-3">
             <img src="/icon.png" alt="Logo" className="w-10 h-10 rounded-lg flex-shrink-0" />
             <div>
-              <h1 className="text-masjid-gold font-bold text-sm">Gausul Azam Mosjid</h1>
+              <h1 className="text-masjid-gold font-bold text-sm">Gausul Azam Masjid</h1>
               <p className="text-gray-600 text-[0.6rem]">Uttara, Dhaka</p>
             </div>
           </div>
@@ -1000,7 +1000,7 @@ export default function DashboardPage() {
           <button onClick={logout} className="flex items-center gap-2 text-gray-500 hover:text-red-400 text-xs transition bg-transparent border-none cursor-pointer w-full px-1">
             <Icon name="logout" size={14} /> Sign Out
           </button>
-          <p className="text-gray-700 text-[0.6rem] mt-3">&copy; 2026 Gausul Azam Jameh Mosjid &middot; v2.2</p>
+          <p className="text-gray-700 text-[0.6rem] mt-3">&copy; 2026 Gausul Azam Jameh Masjid &middot; v2.2</p>
           <p className="text-masjid-gold text-[0.55rem] mt-1 font-semibold">Powered by Trinovent Tech</p>
         </div>
       </aside>

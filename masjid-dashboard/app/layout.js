@@ -1,8 +1,8 @@
 import './globals.css'
 
 export const metadata = {
-  title: 'Gausul Azam Jameh Mosjid - Dashboard',
-  description: 'Management dashboard for Gausul Azam Jameh Mosjid, Uttara, Dhaka',
+  title: 'Gausul Azam Jameh Masjid - Dashboard',
+  description: 'Management dashboard for Gausul Azam Jameh Masjid, Uttara, Dhaka',
   icons: {
     icon: '/icon.png',
   },

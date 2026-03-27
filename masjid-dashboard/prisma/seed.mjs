@@ -53,7 +53,7 @@ async function main() {
   // Mosque info
   await prisma.mosque.create({
     data: {
-      name: 'Gausul Azam Jameh Mosjid',
+      name: 'Gausul Azam Jameh Masjid',
       address: 'Road 9, Sector 13, Uttara, Dhaka',
       phone: '',
       email: '',

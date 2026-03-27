@@ -117,7 +117,7 @@ export default function HomeScreen() {
           <View style={styles.headerRow}>
             <Image source={require('../../assets/icon.png')} style={{ width: 44, height: 44, borderRadius: 10 }} />
             <View style={{ flex: 1 }}>
-              <Text style={[styles.mosqueName, { color: colors.gold }]}>{data.mosque?.name || 'Gausul Azam Jameh Mosjid'}</Text>
+              <Text style={[styles.mosqueName, { color: colors.gold }]}>{data.mosque?.name || 'Gausul Azam Jameh Masjid'}</Text>
               <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>{data.mosque?.address || 'Road 9, Sector 13, Uttara, Dhaka'}</Text>
             </View>
           </View>

@@ -1,7 +1,7 @@
 {
-  "name": "Gausul Azam Mosjid",
-  "short_name": "GA Mosjid",
-  "description": "Prayer times, Quran reader, and Qibla compass for Gausul Azam Jameh Mosjid",
+  "name": "Gausul Azam Masjid",
+  "short_name": "GA Masjid",
+  "description": "Prayer times, Quran reader, and Qibla compass for Gausul Azam Jameh Masjid",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f1210",

@@ -1,6 +1,6 @@
 import { Coordinates, PrayerTimes, CalculationMethod, Madhab } from 'adhan'
 
-// Gausul Azam Jameh Mosjid — Uttara, Dhaka, Bangladesh
+// Gausul Azam Jameh Masjid — Uttara, Dhaka, Bangladesh
 const DHAKA_COORDS = new Coordinates(23.8759, 90.3795)
 
 // Karachi method is standard in Bangladesh

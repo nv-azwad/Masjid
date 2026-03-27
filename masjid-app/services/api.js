@@ -44,7 +44,7 @@ export async function fetchMosqueData() {
     // Use fully calculated times (adhan + estimated jamaat)
     return {
       mosque: {
-        name: 'Gausul Azam Jameh Mosjid',
+        name: 'Gausul Azam Jameh Masjid',
         address: 'Road 9, Sector 13, Uttara, Dhaka',
       },
       prayers: calculated,

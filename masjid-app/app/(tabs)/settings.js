@@ -161,11 +161,11 @@ export default function SettingsScreen() {
         {/* About */}
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.sectionTitle, { color: colors.gold, marginBottom: 10 }]}>About</Text>
-          <Text style={{ color: colors.textSecondary, fontSize: 13 }}>Gausul Azam Jameh Mosjid</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 13 }}>Gausul Azam Jameh Masjid</Text>
           <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: 2 }}>Road 9, Sector 13, Uttara, Dhaka</Text>
           <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: 2 }}>Version 1.0.0</Text>
           <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 12 }}>
-            © 2026 Gausul Azam Jameh Mosjid
+            © 2026 Gausul Azam Jameh Masjid
           </Text>
           <Text style={{ color: colors.gold, fontSize: 10, marginTop: 6, fontWeight: '600' }}>
             Powered by Trinovent Tech

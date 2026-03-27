@@ -42,8 +42,8 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <img src="/icon.png" alt="Gausul Azam Jameh Mosjid" className="w-16 h-16 rounded-2xl mx-auto mb-4" />
-          <h1 className="text-masjid-gold text-xl font-bold">Gausul Azam Jameh Mosjid</h1>
+          <img src="/icon.png" alt="Gausul Azam Jameh Masjid" className="w-16 h-16 rounded-2xl mx-auto mb-4" />
+          <h1 className="text-masjid-gold text-xl font-bold">Gausul Azam Jameh Masjid</h1>
           <p className="text-gray-600 text-sm mt-1">Admin Dashboard</p>
         </div>
 
@@ -90,7 +90,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-gray-700 text-[0.6rem] text-center mt-6">&copy; 2026 Gausul Azam Jameh Mosjid</p>
+        <p className="text-gray-700 text-[0.6rem] text-center mt-6">&copy; 2026 Gausul Azam Jameh Masjid</p>
         <p className="text-masjid-gold text-[0.55rem] text-center mt-1 font-semibold">Powered by Trinovent Tech</p>
       </div>
     </div>
