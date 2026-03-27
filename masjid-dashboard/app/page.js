@@ -543,8 +543,8 @@ function Notifications({ onToast }) {
                   <span className="text-white font-medium text-sm">{n.title}</span>
                   <div className="flex items-center gap-3">
                     <span className="text-gray-600 text-xs">{new Date(n.sentAt).toLocaleString()}</span>
-                    <button onClick={() => remove(n.id)} disabled={deleting === n.id} className="text-gray-600 hover:text-red-400 transition" title="Delete">
-                      <Icon name="close" size={14} />
+                    <button onClick={() => remove(n.id)} disabled={deleting === n.id} className="text-gray-600 hover:text-red-400 transition p-1" title="Delete">
+                      <Icon name="trash" size={14} />
                     </button>
                   </div>
                 </div>
