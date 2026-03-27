@@ -969,7 +969,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-3">
             <img src="/icon.png" alt="Logo" className="w-10 h-10 rounded-lg flex-shrink-0" />
             <div>
-              <h1 className="text-masjid-gold font-bold text-sm">Gausul Azam Masjid</h1>
+              <h1 className="text-masjid-gold font-bold text-sm">Gausul Azam Jameh Masjid</h1>
               <p className="text-gray-600 text-[0.6rem]">Uttara, Dhaka</p>
             </div>
           </div>
