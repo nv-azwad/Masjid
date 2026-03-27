@@ -507,8 +507,12 @@ function Notifications({ onToast }) {
   const remove = async (id) => {
     setDeleting(id)
     const result = await api.del('/api/notifications', { id })
-    if (result.success) {
-      setSent(sent.filter(n => n.id !== id))
+    if (result.error) {
+      onToast('Failed to delete: ' + result.error, 'error')
+    } else {
+      // Refresh list from server to stay in sync
+      const fresh = await api.get('/api/notifications')
+      if (Array.isArray(fresh)) setSent(fresh)
       onToast('Notification deleted', 'success')
     }
     setDeleting(null)
