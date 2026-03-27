@@ -3,6 +3,9 @@ import './globals.css'
 export const metadata = {
   title: 'Gausul Azam Jameh Mosjid - Dashboard',
   description: 'Management dashboard for Gausul Azam Jameh Mosjid, Uttara, Dhaka',
+  icons: {
+    icon: '/icon.png',
+  },
 }
 
 export default function RootLayout({ children }) {

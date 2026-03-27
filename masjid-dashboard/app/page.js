@@ -1001,6 +1001,7 @@ export default function DashboardPage() {
             <Icon name="logout" size={14} /> Sign Out
           </button>
           <p className="text-gray-700 text-[0.6rem] mt-3">&copy; 2026 Gausul Azam Jameh Mosjid &middot; v2.2</p>
+          <p className="text-masjid-gold text-[0.55rem] mt-1 font-semibold">Powered by Trinovent Tech</p>
         </div>
       </aside>
 

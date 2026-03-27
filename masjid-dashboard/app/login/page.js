@@ -95,6 +95,7 @@ export default function LoginPage() {
         </form>
 
         <p className="text-gray-700 text-[0.6rem] text-center mt-6">&copy; 2026 Gausul Azam Jameh Mosjid</p>
+        <p className="text-masjid-gold text-[0.55rem] text-center mt-1 font-semibold">Powered by Trinovent Tech</p>
       </div>
     </div>
   )

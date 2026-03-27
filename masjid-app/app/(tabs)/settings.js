@@ -167,6 +167,9 @@ export default function SettingsScreen() {
           <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 12 }}>
             © 2026 Gausul Azam Jameh Mosjid
           </Text>
+          <Text style={{ color: colors.gold, fontSize: 10, marginTop: 6, fontWeight: '600' }}>
+            Powered by Trinovent Tech
+          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>

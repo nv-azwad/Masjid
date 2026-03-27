@@ -93,6 +93,7 @@ function SplashScreen({ onFinish }) {
           <LoaderBar color="#d4af77" delay={200} />
           <LoaderBar color="#00ff7f" delay={400} />
         </View>
+        <Text style={splashStyles.poweredBy}>Powered by Trinovent Tech</Text>
       </Animated.View>
     </View>
   )
@@ -129,6 +130,13 @@ const splashStyles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginTop: 32,
+  },
+  poweredBy: {
+    color: '#d4af77',
+    fontSize: 10,
+    fontWeight: '600',
+    marginTop: 24,
+    letterSpacing: 0.5,
   },
 })
 

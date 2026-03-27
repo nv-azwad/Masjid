@@ -12,12 +12,13 @@
     },
     "android": {
       "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#0f1210"
       },
-      "package": "com.cubextech.gausulazam"
+      "package": "com.trinovent.gausulazam"
     },
     "ios": {
-      "bundleIdentifier": "com.cubextech.gausulazam",
+      "bundleIdentifier": "com.trinovent.gausulazam",
       "supportsTablet": true
     },
     "web": {
