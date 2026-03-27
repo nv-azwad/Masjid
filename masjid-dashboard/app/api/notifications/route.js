@@ -60,6 +60,23 @@ export async function POST(request) {
   }
 }
 
+// DELETE /api/notifications — admin can delete a notification
+export async function DELETE(request) {
+  try {
+    const user = await requireAuth(request)
+    if (!user || user.role !== 'ADMIN') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { id } = await request.json()
+    if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 })
+
+    await prisma.notification.delete({ where: { id } })
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Delete notification error:', error.message)
+    return NextResponse.json({ error: 'Failed to delete notification' }, { status: 500 })
+  }
+}
+
 async function sendExpoPush(tokens, title, body) {
   const messages = tokens.map(token => ({
     to: token, sound: 'default', title, body, data: { type: 'announcement' },

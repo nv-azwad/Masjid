@@ -34,7 +34,7 @@ const api = {
   get: (url) => apiCall(url),
   post: (url, data) => apiCall(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }),
   put: (url, data) => apiCall(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }),
-  del: (url) => apiCall(url, { method: 'DELETE' }),
+  del: (url, data) => apiCall(url, { method: 'DELETE', ...(data && { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }) }),
 }
 
 // ── Toast Notification ──
@@ -84,12 +84,12 @@ function Icon({ name, size = 20, className = '' }) {
 }
 
 // ── Dashboard Overview ──
-function Overview({ prayers, imams, loading, pendingCount, userRole }) {
+function Overview({ prayers, imams, loading, pendingCount, userRole, appStats }) {
   const stats = [
+    { label: 'Active Users', value: appStats?.activeUsers ?? '—', icon: 'bell', color: 'green' },
+    { label: 'Total Installs', value: appStats?.totalInstalls ?? '—', icon: 'user', color: 'gold' },
     { label: 'Prayer Times', value: prayers.length, icon: 'clock', color: 'green' },
-    { label: 'Imam Profiles', value: imams.length, icon: 'user', color: 'gold' },
-    { label: 'Today', value: new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }), icon: 'star', color: 'green' },
-    { label: userRole === 'ADMIN' ? 'Pending Approvals' : 'App Status', value: userRole === 'ADMIN' ? pendingCount : 'Live', icon: userRole === 'ADMIN' ? 'shield' : 'bell', color: 'gold' },
+    { label: userRole === 'ADMIN' ? 'Pending Approvals' : 'Imam Profiles', value: userRole === 'ADMIN' ? pendingCount : imams.length, icon: userRole === 'ADMIN' ? 'shield' : 'user', color: 'gold' },
   ]
 
   return (
@@ -488,6 +488,7 @@ function Notifications({ onToast }) {
   const [message, setMessage] = useState('')
   const [sent, setSent] = useState([])
   const [sending, setSending] = useState(false)
+  const [deleting, setDeleting] = useState(null)
 
   useEffect(() => { api.get('/api/notifications').then(setSent) }, [])
 
@@ -501,6 +502,16 @@ function Notifications({ onToast }) {
       setSent([result, ...sent])
     }
     setTitle(''); setMessage(''); setSending(false)
+  }
+
+  const remove = async (id) => {
+    setDeleting(id)
+    const result = await api.del('/api/notifications', { id })
+    if (result.success) {
+      setSent(sent.filter(n => n.id !== id))
+      onToast('Notification deleted', 'success')
+    }
+    setDeleting(null)
   }
 
   return (
@@ -530,7 +541,12 @@ function Notifications({ onToast }) {
               <div key={n.id} className="bg-masjid-card rounded-xl p-4 border border-masjid-border">
                 <div className="flex justify-between items-center mb-1.5">
                   <span className="text-white font-medium text-sm">{n.title}</span>
-                  <span className="text-gray-600 text-xs">{new Date(n.sentAt).toLocaleString()}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-gray-600 text-xs">{new Date(n.sentAt).toLocaleString()}</span>
+                    <button onClick={() => remove(n.id)} disabled={deleting === n.id} className="text-gray-600 hover:text-red-400 transition" title="Delete">
+                      <Icon name="close" size={14} />
+                    </button>
+                  </div>
                 </div>
                 <p className="text-gray-400 text-sm">{n.message}</p>
               </div>
@@ -872,6 +888,7 @@ export default function DashboardPage() {
   const [jummah, setJummah] = useState(null)
   const [imams, setImams] = useState([])
   const [pendingCount, setPendingCount] = useState(0)
+  const [appStats, setAppStats] = useState(null)
   const [toast, setToast] = useState(null)
 
   const showToast = useCallback((message, type) => {
@@ -907,10 +924,12 @@ export default function DashboardPage() {
   const loadData = useCallback(async () => {
     try {
       // Load mosque data and pending count in parallel
-      const [mosqueData, pending] = await Promise.all([
+      const [mosqueData, pending, stats] = await Promise.all([
         api.get('/api/mosque'),
         api.get('/api/pending'),
+        api.get('/api/stats').catch(() => null),
       ])
+      if (stats) setAppStats(stats)
       setPrayers(mosqueData.prayers || [])
       setJummah(mosqueData.jummah)
       setImams(mosqueData.imams || [])
@@ -1010,7 +1029,7 @@ export default function DashboardPage() {
           <h2 className="text-white font-medium text-sm">{menu.find(m => m.id === section)?.label}</h2>
         </header>
         <main className="flex-1 p-6 overflow-y-auto">
-          {section === 'overview' && <Overview prayers={prayers} imams={imams} loading={loading} pendingCount={pendingCount} userRole={user.role} />}
+          {section === 'overview' && <Overview prayers={prayers} imams={imams} loading={loading} pendingCount={pendingCount} userRole={user.role} appStats={appStats} />}
           {section === 'prayers' && <PrayerManager prayers={prayers} onRefresh={loadData} onToast={showToast} />}
           {section === 'jummah' && <JummahManager jummah={jummah} onRefresh={loadData} onToast={showToast} />}
           {section === 'imams' && <ImamsManager imams={imams} onRefresh={loadData} onToast={showToast} />}
