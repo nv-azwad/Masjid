@@ -938,9 +938,7 @@ export default function DashboardPage() {
     return (
       <div className="min-h-screen bg-[#0a0c0a] flex items-center justify-center" style={{ fontFamily: "'Inter', sans-serif" }}>
         <div className="text-center">
-          <div className="w-12 h-12 bg-masjid-green rounded-xl flex items-center justify-center mx-auto mb-3">
-            <Icon name="mosque" size={24} className="text-masjid-dark" />
-          </div>
+          <img src="/icon.png" alt="Logo" className="w-12 h-12 rounded-xl mx-auto mb-3" />
           <p className="text-gray-500 text-sm">Loading...</p>
         </div>
       </div>
@@ -965,11 +963,11 @@ export default function DashboardPage() {
 
       {/* Sidebar */}
       <aside className="bg-masjid-bg border-r border-masjid-border flex flex-col flex-shrink-0 transition-all duration-300 overflow-hidden" style={{ width: sidebar ? 260 : 0 }}>
-        <div className="p-5 border-b border-masjid-border whitespace-nowrap">
+        <div className="p-5 border-b border-masjid-border">
           <div className="flex items-center gap-3">
             <img src="/icon.png" alt="Logo" className="w-10 h-10 rounded-lg flex-shrink-0" />
             <div>
-              <h1 className="text-masjid-gold font-bold text-sm">Gausul Azam Jameh Masjid</h1>
+              <h1 className="text-masjid-gold font-bold text-sm leading-tight">Gausul Azam<br/>Jameh Masjid</h1>
               <p className="text-gray-600 text-[0.6rem]">Uttara, Dhaka</p>
             </div>
           </div>
