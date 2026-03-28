@@ -8,3 +8,7 @@ dist/
 *.mobileprovision
 *.orig.*
 web-build/
+
+# Firebase credentials (uploaded via EAS secrets for builds)
+google-services.json
+GoogleService-Info.plist
