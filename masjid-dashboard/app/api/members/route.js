@@ -1,5 +1,6 @@
 import { prisma } from '../../../lib/prisma'
 import { verifyFirebaseToken } from '../../../lib/firebase-admin'
+import { checkRateLimit } from '../../../lib/rate-limit'
 import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
@@ -7,6 +8,12 @@ export const dynamic = 'force-dynamic'
 // POST /api/members — Register or login a member after Firebase phone auth
 export async function POST(request) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+    const rateCheck = checkRateLimit(`member-reg:${ip}`)
+    if (!rateCheck.allowed) {
+      return NextResponse.json({ error: `Too many attempts. Try again in ${rateCheck.retryAfter} seconds.` }, { status: 429 })
+    }
+
     const decoded = await verifyFirebaseToken(request)
     if (!decoded) {
       return NextResponse.json({ error: 'Invalid or missing token' }, { status: 401 })

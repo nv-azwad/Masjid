@@ -1,5 +1,5 @@
 import { prisma } from '../../../lib/prisma'
-import { requireAuth } from '../../../lib/auth'
+import { requireAdmin } from '../../../lib/auth'
 import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
@@ -7,8 +7,8 @@ export const dynamic = 'force-dynamic'
 // GET /api/stats — admin-only app usage stats
 export async function GET(request) {
   try {
-    const user = await requireAuth(request)
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const user = await requireAdmin(request)
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
 
     // "Active" = opened app in the last 7 days
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)

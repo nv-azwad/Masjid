@@ -28,7 +28,7 @@ export async function GET() {
   } catch (error) {
     console.error('Database error:', error.message)
     return NextResponse.json(
-      { error: 'Database connection failed. Check DATABASE_URL in .env' },
+      { error: 'Database connection failed' },
       { status: 500 }
     )
   }

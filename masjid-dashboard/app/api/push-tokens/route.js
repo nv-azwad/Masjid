@@ -1,5 +1,6 @@
 import { prisma } from '../../../lib/prisma'
 import { verifyFirebaseToken } from '../../../lib/firebase-admin'
+import { checkRateLimit } from '../../../lib/rate-limit'
 import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
@@ -7,9 +8,18 @@ export const dynamic = 'force-dynamic'
 // POST /api/push-tokens — Register or reactivate a push token
 export async function POST(request) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+    const rateCheck = checkRateLimit(`push-token:${ip}`)
+    if (!rateCheck.allowed) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+    }
+
     const { token } = await request.json()
-    if (!token) {
+    if (!token || typeof token !== 'string') {
       return NextResponse.json({ error: 'Token is required' }, { status: 400 })
+    }
+    if (!token.startsWith('ExponentPushToken[') || token.length > 200) {
+      return NextResponse.json({ error: 'Invalid push token format' }, { status: 400 })
     }
 
     // If authenticated, link push token to member
@@ -41,11 +51,11 @@ export async function POST(request) {
 export async function DELETE(request) {
   try {
     const { token } = await request.json()
-    if (!token) {
+    if (!token || typeof token !== 'string') {
       return NextResponse.json({ error: 'Token is required' }, { status: 400 })
     }
 
-    await prisma.pushToken.updateMany({
+    await prisma.pushToken.update({
       where: { token },
       data: { active: false },
     })

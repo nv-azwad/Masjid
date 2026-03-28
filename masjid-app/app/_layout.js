@@ -146,7 +146,9 @@ async function trackAppOpen() {
   try {
     let deviceId = await AsyncStorage.getItem('device_id')
     if (!deviceId) {
-      deviceId = 'dev_' + Math.random().toString(36).slice(2) + Date.now().toString(36)
+      deviceId = 'dev_' + (typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : 'xxxx-xxxx-xxxx'.replace(/x/g, () => Math.floor(Math.random() * 16).toString(16)) + '-' + Date.now().toString(36))
       await AsyncStorage.setItem('device_id', deviceId)
     }
     const platform = Platform.OS // 'android', 'ios', or 'web'
@@ -200,7 +202,7 @@ function RootLayoutInner() {
       const lastSeen = await AsyncStorage.getItem('notifications_last_seen')
       const controller = new AbortController()
       const timer = setTimeout(() => controller.abort(), 5000)
-      const res = await fetch(`https://masjid-dun.vercel.app/api/notifications`, { signal: controller.signal })
+      const res = await fetch(`${API_BASE}/api/notifications`, { signal: controller.signal })
       clearTimeout(timer)
       if (res.ok) {
         const notifs = await res.json()

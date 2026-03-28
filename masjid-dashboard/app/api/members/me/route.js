@@ -38,11 +38,38 @@ export async function PUT(request) {
     const body = await request.json()
     const { name, language, notifyAll, prayerPrefs } = body
 
+    // Validate input types and values
     const updateData = {}
-    if (name !== undefined) updateData.name = name
-    if (language !== undefined) updateData.language = language
-    if (notifyAll !== undefined) updateData.notifyAll = notifyAll
-    if (prayerPrefs !== undefined) updateData.prayerPrefs = prayerPrefs
+    if (name !== undefined) {
+      if (typeof name !== 'string' || name.length > 100) {
+        return NextResponse.json({ error: 'Invalid name' }, { status: 400 })
+      }
+      updateData.name = name.trim()
+    }
+    if (language !== undefined) {
+      if (!['bn', 'en', 'ar'].includes(language)) {
+        return NextResponse.json({ error: 'Invalid language' }, { status: 400 })
+      }
+      updateData.language = language
+    }
+    if (notifyAll !== undefined) {
+      if (typeof notifyAll !== 'boolean') {
+        return NextResponse.json({ error: 'Invalid notifyAll value' }, { status: 400 })
+      }
+      updateData.notifyAll = notifyAll
+    }
+    if (prayerPrefs !== undefined) {
+      if (typeof prayerPrefs !== 'object' || prayerPrefs === null || Array.isArray(prayerPrefs)) {
+        return NextResponse.json({ error: 'Invalid prayerPrefs' }, { status: 400 })
+      }
+      const validKeys = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha', 'jummah']
+      for (const [key, val] of Object.entries(prayerPrefs)) {
+        if (!validKeys.includes(key) || typeof val !== 'boolean') {
+          return NextResponse.json({ error: 'Invalid prayerPrefs' }, { status: 400 })
+        }
+      }
+      updateData.prayerPrefs = prayerPrefs
+    }
 
     const member = await prisma.member.update({
       where: { firebaseUid: decoded.uid },

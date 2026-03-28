@@ -16,7 +16,7 @@ export async function GET(request) {
     const changes = await prisma.pendingChange.findMany({
       where,
       include: {
-        submitter: { select: { id: true, name: true, email: true, role: true } },
+        submitter: { select: { id: true, name: true, role: true } },
         reviewer: { select: { id: true, name: true } },
       },
       orderBy: { createdAt: 'desc' },
