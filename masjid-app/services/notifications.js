@@ -23,15 +23,14 @@ const DEFAULT_PREFS = {
 export async function registerForPushNotifications() {
   try {
     // Push notifications not supported on web
-    if (Platform.OS === 'web') return null
+    if (Platform.OS === 'web') return { token: null, reason: 'web' }
 
     const Notifications = await import('expo-notifications')
     const Device = await import('expo-device')
 
-    // Must be a physical device
-    if (!Device.isDevice) {
-      console.log('Push notifications require a physical device')
-      return null
+    const isPhysical = Device.isDevice ?? Device.default?.isDevice ?? true
+    if (!isPhysical) {
+      return { token: null, reason: 'not_physical_device' }
     }
 
     // Check/request permission
@@ -43,16 +42,18 @@ export async function registerForPushNotifications() {
     }
 
     if (finalStatus !== 'granted') {
-      console.log('Push notification permission denied')
-      return null
+      return { token: null, reason: 'permission_denied' }
     }
 
     // Get Expo push token
     const Constants = await import('expo-constants')
-    const projectId = Constants.default.expoConfig?.extra?.eas?.projectId
-    const tokenData = await Notifications.getExpoPushTokenAsync({
-      projectId,
-    })
+    const projectId = Constants.default?.expoConfig?.extra?.eas?.projectId
+      ?? Constants.expoConfig?.extra?.eas?.projectId
+    if (!projectId) {
+      return { token: null, reason: 'no_project_id' }
+    }
+
+    const tokenData = await Notifications.getExpoPushTokenAsync({ projectId })
     const token = tokenData.data
 
     // Configure notification appearance on Android
@@ -67,10 +68,10 @@ export async function registerForPushNotifications() {
     // Store token locally
     await AsyncStorage.setItem(PUSH_TOKEN_KEY, token)
 
-    return token
+    return { token, reason: null }
   } catch (e) {
     console.log('Push token registration failed:', e)
-    return null
+    return { token: null, reason: 'error', message: e.message }
   }
 }
 

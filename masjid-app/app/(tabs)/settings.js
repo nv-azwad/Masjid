@@ -65,18 +65,20 @@ export default function SettingsScreen() {
         }
 
         // Enable: register push token + schedule reminders
-        const token = await registerForPushNotifications()
-        if (token) {
-          await sendTokenToServer(token)
+        const result = await registerForPushNotifications()
+        if (result.token) {
+          await sendTokenToServer(result.token)
         } else {
-          // Permission denied or not a physical device
           prefs.enabled = false
           await saveNotificationPrefs(prefs)
           setNotificationsOn(false)
-          showAlert(
-            'Notifications Unavailable',
-            'Please enable notification permissions in your device settings.',
-          )
+          const messages = {
+            permission_denied: 'Please enable notification permissions in your device settings.',
+            not_physical_device: 'Push notifications are only available on physical devices.',
+            no_project_id: 'App configuration error. Please reinstall the app.',
+            error: `Something went wrong: ${result.message || 'Unknown error'}`,
+          }
+          showAlert('Notifications Unavailable', messages[result.reason] || messages.error)
           setTogglingNotif(false)
           return
         }

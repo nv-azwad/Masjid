@@ -61,15 +61,18 @@ export default function HomeScreen() {
     // Auto-enable master toggle if it's off
     let base = notifPrefs
     if (!base.enabled) {
-      const token = await registerForPushNotifications()
-      if (!token) {
-        showAlert(
-          'Notifications Unavailable',
-          'Please enable notification permissions in your device settings.',
-        )
+      const result = await registerForPushNotifications()
+      if (!result.token) {
+        const messages = {
+          permission_denied: 'Please enable notification permissions in your device settings.',
+          not_physical_device: 'Push notifications are only available on physical devices.',
+          no_project_id: 'App configuration error. Please reinstall the app.',
+          error: `Something went wrong: ${result.message || 'Unknown error'}`,
+        }
+        showAlert('Notifications Unavailable', messages[result.reason] || messages.error)
         return
       }
-      await sendTokenToServer(token)
+      await sendTokenToServer(result.token)
       base = { ...base, enabled: true }
     }
 

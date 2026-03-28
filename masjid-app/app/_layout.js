@@ -218,8 +218,8 @@ function RootLayoutInner() {
 
   async function initNotifications(mosqueData, prefs) {
     try {
-      const token = await registerForPushNotifications()
-      if (token) await sendTokenToServer(token)
+      const result = await registerForPushNotifications()
+      if (result.token) await sendTokenToServer(result.token)
       if (mosqueData?.prayers) {
         await schedulePrayerReminders(mosqueData.prayers, prefs)
       }
