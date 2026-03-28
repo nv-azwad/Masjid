@@ -64,6 +64,7 @@ export default function HomeScreen() {
       const result = await registerForPushNotifications()
       if (!result.token) {
         const messages = {
+          web: 'Push notifications are only available on the mobile app. Download the app for prayer reminders.',
           permission_denied: 'Please enable notification permissions in your device settings.',
           not_physical_device: 'Push notifications are only available on physical devices.',
           no_project_id: 'App configuration error. Please reinstall the app.',

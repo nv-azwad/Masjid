@@ -73,6 +73,7 @@ export default function SettingsScreen() {
           await saveNotificationPrefs(prefs)
           setNotificationsOn(false)
           const messages = {
+            web: 'Push notifications are only available on the mobile app.',
             permission_denied: 'Please enable notification permissions in your device settings.',
             not_physical_device: 'Push notifications are only available on physical devices.',
             no_project_id: 'App configuration error. Please reinstall the app.',

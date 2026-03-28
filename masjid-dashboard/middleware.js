@@ -32,7 +32,9 @@ export function middleware(request) {
 
   const publicGetApis = ['/api/prayers', '/api/imams', '/api/jummah', '/api/mosque', '/api/notifications', '/api/keepalive']
   if (request.method === 'GET' && publicGetApis.some(api => pathname.startsWith(api))) {
-    return NextResponse.next()
+    const response = NextResponse.next()
+    response.headers.set('Access-Control-Allow-Origin', '*')
+    return response
   }
 
   // Allow cron jobs (authenticated by CRON_SECRET in the route handler)
