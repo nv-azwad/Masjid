@@ -43,7 +43,7 @@ export default function QiblaScreen() {
           let diff = newHeading - prevHeading.current
           if (diff > 180) diff -= 360
           if (diff < -180) diff += 360
-          const smooth = (prevHeading.current + 0.3 * diff + 360) % 360
+          const smooth = (prevHeading.current + 0.1 * diff + 360) % 360
           prevHeading.current = smooth
 
           setHeading(smooth)
