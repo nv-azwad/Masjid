@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -19,7 +19,7 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ username, password }),
       })
 
       const data = await res.json()
@@ -58,13 +58,13 @@ export default function LoginPage() {
           )}
 
           <div className="mb-4">
-            <label className="block text-masjid-gold text-xs mb-1.5 font-medium">Email</label>
+            <label className="block text-masjid-gold text-xs mb-1.5 font-medium">Username</label>
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               className="w-full bg-masjid-bg border border-masjid-border rounded-lg px-4 py-3 text-white text-sm outline-none focus:border-masjid-green transition"
-              placeholder="you@example.com"
+              placeholder="Enter your username"
               required
             />
           </div>
@@ -88,6 +88,10 @@ export default function LoginPage() {
           >
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
+
+          <div className="text-center mt-4">
+            <a href="/forgot-password" className="text-masjid-gold text-xs hover:underline">Forgot Password?</a>
+          </div>
         </form>
 
         <p className="text-gray-700 text-[0.6rem] text-center mt-6">&copy; 2026 Gausul Azam Jameh Masjid</p>

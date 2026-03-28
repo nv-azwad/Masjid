@@ -756,7 +756,7 @@ function UserManagement({ currentUser, onToast }) {
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'MODERATOR' })
+  const [form, setForm] = useState({ name: '', username: '', password: '', role: 'MODERATOR' })
 
   const load = useCallback(async () => {
     const data = await api.get('/api/users')
@@ -767,7 +767,7 @@ function UserManagement({ currentUser, onToast }) {
   useEffect(() => { load() }, [load])
 
   const addUser = async () => {
-    if (!form.name || !form.email || !form.password) {
+    if (!form.name || !form.username || !form.password) {
       onToast('All fields are required', 'error')
       return
     }
@@ -790,7 +790,7 @@ function UserManagement({ currentUser, onToast }) {
     }
     onToast('User created successfully', 'success')
     setAdding(false)
-    setForm({ name: '', email: '', password: '', role: 'MODERATOR' })
+    setForm({ name: '', username: '', password: '', role: 'MODERATOR' })
     await load()
   }
 
@@ -822,8 +822,8 @@ function UserManagement({ currentUser, onToast }) {
               <input className="w-full bg-masjid-bg border border-masjid-border rounded-lg px-4 py-2.5 text-white text-sm outline-none focus:border-masjid-green" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
             </div>
             <div>
-              <label className="block text-masjid-gold text-xs mb-1.5 font-medium">Email</label>
-              <input type="email" className="w-full bg-masjid-bg border border-masjid-border rounded-lg px-4 py-2.5 text-white text-sm outline-none focus:border-masjid-green" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+              <label className="block text-masjid-gold text-xs mb-1.5 font-medium">Username</label>
+              <input type="text" className="w-full bg-masjid-bg border border-masjid-border rounded-lg px-4 py-2.5 text-white text-sm outline-none focus:border-masjid-green" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} />
             </div>
             <div>
               <label className="block text-masjid-gold text-xs mb-1.5 font-medium">Password</label>
@@ -863,7 +863,7 @@ function UserManagement({ currentUser, onToast }) {
                     <span className="px-2 py-0.5 rounded-full text-[0.6rem] font-semibold bg-blue-500/15 text-blue-400">YOU</span>
                   )}
                 </div>
-                <p className="text-gray-500 text-sm">{user.email}</p>
+                <p className="text-gray-500 text-sm">{user.username}</p>
               </div>
               {user.id !== currentUser.id && (
                 <button onClick={() => removeUser(user.id)} className="bg-red-500/10 border border-red-500/30 rounded-lg p-2.5 hover:bg-red-500/20 transition flex-shrink-0">

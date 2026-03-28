@@ -50,7 +50,7 @@ export const passwordSchema = z
   .regex(/[0-9]/, 'Password must contain at least one number')
 
 export const userCreateSchema = z.object({
-  email: z.string().email('Invalid email address').max(200),
+  username: z.string().min(3, 'Username must be at least 3 characters').max(50).regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores'),
   password: passwordSchema,
   name: z.string().min(1, 'Name is required').max(100),
   role: z.enum(['ADMIN', 'MODERATOR']).default('MODERATOR'),

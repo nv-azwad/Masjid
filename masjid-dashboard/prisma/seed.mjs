@@ -32,10 +32,11 @@ async function main() {
   const adminPassword = await bcrypt.hash(adminPass, 12)
   await prisma.user.create({
     data: {
-      email: 'admin@gausulazam.org',
+      username: 'admin_tt',
       password: adminPassword,
       name: 'Admin',
       role: 'ADMIN',
+      recoveryEmail: process.env.RECOVERY_EMAIL || null,
     },
   })
 
@@ -43,7 +44,7 @@ async function main() {
   const modPassword = await bcrypt.hash(modPass, 12)
   await prisma.user.create({
     data: {
-      email: 'moderator@gausulazam.org',
+      username: 'mod_tt',
       password: modPassword,
       name: 'Moderator',
       role: 'MODERATOR',
@@ -111,10 +112,10 @@ async function main() {
   console.log('')
   console.log('  SAVE THESE CREDENTIALS — they will NOT be shown again!')
   console.log('')
-  console.log(`  Admin:     admin@gausulazam.org`)
+  console.log(`  Admin:     admin_tt`)
   console.log(`  Password:  ${adminPass}`)
   console.log('')
-  console.log(`  Moderator: moderator@gausulazam.org`)
+  console.log(`  Moderator: mod_tt`)
   console.log(`  Password:  ${modPass}`)
   console.log('')
   console.log('  Change these passwords after first login.')

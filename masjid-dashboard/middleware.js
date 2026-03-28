@@ -4,17 +4,17 @@ export function middleware(request) {
   const token = request.cookies.get('auth-token')?.value
   const { pathname } = request.nextUrl
 
-  // Allow login page and public API routes
-  if (pathname.startsWith('/login')) {
+  // Allow login, forgot-password, and reset-password pages
+  if (pathname.startsWith('/login') || pathname.startsWith('/forgot-password') || pathname.startsWith('/reset-password')) {
     // If already logged in, redirect to dashboard
-    if (token) {
+    if (token && pathname.startsWith('/login')) {
       return NextResponse.redirect(new URL('/', request.url))
     }
     return NextResponse.next()
   }
 
-  // Public API routes (mobile app reads)
-  if (pathname.startsWith('/api/auth/login') || pathname.startsWith('/api/auth/logout')) {
+  // Public auth API routes
+  if (pathname.startsWith('/api/auth/login') || pathname.startsWith('/api/auth/logout') || pathname.startsWith('/api/auth/forgot-password') || pathname.startsWith('/api/auth/reset-password')) {
     return NextResponse.next()
   }
 
