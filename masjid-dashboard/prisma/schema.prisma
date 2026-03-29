@@ -111,6 +111,30 @@ model AppInstall {
   createdAt  DateTime @default(now())
 }
 
+// Islamic calendar events created by admin
+model CalendarEvent {
+  id          String   @id @default(cuid())
+  date        DateTime // Gregorian date (midnight UTC)
+  title       String
+  description String?
+  type        String   @default("event") // event, special_prayer, holiday, reminder
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Community posts submitted by app users, reviewed by admin
+model CommunityPost {
+  id          String   @id @default(cuid())
+  authorName  String?  // null = anonymous
+  content     String
+  deviceId    String   // rate limiting by device
+  status      String   @default("pending") // pending, approved, rejected
+  reviewedBy  String?
+  reviewedAt  DateTime?
+  createdAt   DateTime @default(now())
+}
+
 // Community members (mosque attendees) - separate from admin User model
 model Member {
   id          String   @id @default(cuid())

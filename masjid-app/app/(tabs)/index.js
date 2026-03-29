@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Alert, Platform, Image } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Alert, Platform, Image, Modal, Dimensions } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../../context/ThemeContext'
 import { fetchMosqueData } from '../../services/api'
+import { toHijri, getHijriMonthName, formatHijri, getMonthDays } from '../../services/hijriDate'
 import {
   getNotificationPrefs,
   saveNotificationPrefs,
@@ -12,6 +13,7 @@ import {
   sendTokenToServer,
 } from '../../services/notifications'
 import { usePreloadedData } from '../_layout'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const showAlert = (title, message) => {
   if (Platform.OS === 'web') {
@@ -21,12 +23,183 @@ const showAlert = (title, message) => {
   }
 }
 
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+
+function CalendarModal({ visible, onClose, events, colors, isDark, calMonth, calYear, setCalMonth, setCalYear }) {
+  const screenW = Dimensions.get('window').width
+  const cellSize = Math.floor((screenW - 64) / 7)
+
+  const days = getMonthDays(calYear, calMonth)
+  const firstDow = days[0]?.date.getDay() || 0
+  const today = new Date()
+  const todayStr = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`
+
+  // Map events by date string for quick lookup
+  const eventMap = {}
+  events.forEach(e => {
+    const d = new Date(e.date)
+    const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+    if (!eventMap[key]) eventMap[key] = []
+    eventMap[key].push(e)
+  })
+
+  const [selectedDay, setSelectedDay] = useState(null)
+  const selectedEvents = selectedDay ? (eventMap[`${calYear}-${calMonth}-${selectedDay}`] || []) : []
+
+  const prevMonth = () => {
+    if (calMonth === 0) { setCalMonth(11); setCalYear(calYear - 1) }
+    else setCalMonth(calMonth - 1)
+    setSelectedDay(null)
+  }
+  const nextMonth = () => {
+    if (calMonth === 11) { setCalMonth(0); setCalYear(calYear + 1) }
+    else setCalMonth(calMonth + 1)
+    setSelectedDay(null)
+  }
+
+  // Hijri month for the 15th of this Gregorian month (representative)
+  const midHijri = toHijri(new Date(calYear, calMonth, 15))
+
+  const typeColors = { event: '#3b82f6', special_prayer: colors.green, holiday: colors.gold, reminder: '#a855f7' }
+
+  return (
+    <Modal visible={visible} animationType="slide" transparent>
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
+        <View style={{ backgroundColor: colors.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '85%', borderWidth: 1, borderColor: colors.border }}>
+          {/* Header */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+            <View>
+              <Text style={{ color: colors.gold, fontSize: 18, fontWeight: '600' }}>Islamic Calendar</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 2 }}>
+                {getHijriMonthName(midHijri.month)} {midHijri.year} AH
+              </Text>
+            </View>
+            <TouchableOpacity onPress={onClose} style={{ padding: 8 }}>
+              <Ionicons name="close" size={24} color={colors.textMuted} />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={{ padding: 16 }} contentContainerStyle={{ paddingBottom: 40 }}>
+            {/* Month navigation */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <TouchableOpacity onPress={prevMonth} style={{ padding: 8 }}>
+                <Ionicons name="chevron-back" size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+              <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600' }}>
+                {MONTHS[calMonth]} {calYear}
+              </Text>
+              <TouchableOpacity onPress={nextMonth} style={{ padding: 8 }}>
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Day headers */}
+            <View style={{ flexDirection: 'row', marginBottom: 8 }}>
+              {DAYS.map(d => (
+                <View key={d} style={{ width: cellSize, alignItems: 'center' }}>
+                  <Text style={{ color: d === 'Fri' ? colors.gold : colors.textMuted, fontSize: 11, fontWeight: '600' }}>{d}</Text>
+                </View>
+              ))}
+            </View>
+
+            {/* Calendar grid */}
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+              {/* Empty cells for days before month starts */}
+              {Array.from({ length: firstDow }).map((_, i) => (
+                <View key={`e${i}`} style={{ width: cellSize, height: cellSize }} />
+              ))}
+              {days.map(({ date, hijri }) => {
+                const dayNum = date.getDate()
+                const dayKey = `${calYear}-${calMonth}-${dayNum}`
+                const isToday = dayKey === todayStr
+                const hasEvent = !!eventMap[dayKey]
+                const isSelected = selectedDay === dayNum
+                const isFriday = date.getDay() === 5
+
+                return (
+                  <TouchableOpacity
+                    key={dayNum}
+                    onPress={() => setSelectedDay(isSelected ? null : dayNum)}
+                    style={{
+                      width: cellSize,
+                      height: cellSize,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: cellSize / 2,
+                      backgroundColor: isSelected ? colors.green + '30' : isToday ? colors.gold + '20' : 'transparent',
+                    }}
+                  >
+                    <Text style={{
+                      color: isSelected ? colors.green : isToday ? colors.gold : isFriday ? colors.gold : colors.text,
+                      fontSize: 14,
+                      fontWeight: isToday || isSelected ? '700' : '400',
+                    }}>
+                      {dayNum}
+                    </Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 8, marginTop: -1 }}>{hijri.day}</Text>
+                    {hasEvent && (
+                      <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: colors.green, position: 'absolute', bottom: 4 }} />
+                    )}
+                  </TouchableOpacity>
+                )
+              })}
+            </View>
+
+            {/* Selected day events */}
+            {selectedDay && (
+              <View style={{ marginTop: 16 }}>
+                <Text style={{ color: colors.gold, fontSize: 14, fontWeight: '600', marginBottom: 8 }}>
+                  {new Date(calYear, calMonth, selectedDay).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                  {' — '}{formatHijri(new Date(calYear, calMonth, selectedDay))}
+                </Text>
+                {selectedEvents.length > 0 ? selectedEvents.map((e, i) => (
+                  <View key={i} style={{ backgroundColor: colors.bg, borderRadius: 12, padding: 12, marginBottom: 8, borderLeftWidth: 3, borderLeftColor: typeColors[e.type] || colors.green }}>
+                    <Text style={{ color: typeColors[e.type] || colors.green, fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 }}>
+                      {e.type === 'special_prayer' ? 'Special Prayer' : e.type}
+                    </Text>
+                    <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600', marginTop: 4 }}>{e.title}</Text>
+                    {e.description ? <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 4 }}>{e.description}</Text> : null}
+                  </View>
+                )) : (
+                  <Text style={{ color: colors.textMuted, fontSize: 13 }}>No events on this date</Text>
+                )}
+              </View>
+            )}
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  )
+}
+
 export default function HomeScreen() {
   const { colors, isDark } = useTheme()
   const { preloadedData } = usePreloadedData() || {}
   const [data, setData] = useState(preloadedData || null)
   const [refreshing, setRefreshing] = useState(false)
   const [notifPrefs, setNotifPrefs] = useState(null)
+  const [showCalendar, setShowCalendar] = useState(false)
+  const [calMonth, setCalMonth] = useState(new Date().getMonth())
+  const [calYear, setCalYear] = useState(new Date().getFullYear())
+  const [lastSeenEvent, setLastSeenEvent] = useState(null)
+
+  // Track if there are unseen calendar events
+  useEffect(() => {
+    AsyncStorage.getItem('last_seen_calendar').then(v => setLastSeenEvent(v))
+  }, [])
+
+  const hasUnseenEvents = data?.calendarEvents?.some(e => {
+    if (!lastSeenEvent) return true
+    return new Date(e.createdAt || e.date) > new Date(lastSeenEvent)
+  })
+
+  const openCalendar = async () => {
+    setShowCalendar(true)
+    const now = new Date().toISOString()
+    await AsyncStorage.setItem('last_seen_calendar', now)
+    setLastSeenEvent(now)
+  }
 
   const load = useCallback(async () => {
     const [d, prefs] = await Promise.all([
@@ -129,6 +302,10 @@ export default function HomeScreen() {
               <Text style={[styles.mosqueName, { color: colors.gold }]}>{data.mosque?.name || 'Gausul Azam Jameh Masjid'}</Text>
               <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>{data.mosque?.address || 'Road 9, Sector 13, Uttara, Dhaka'}</Text>
             </View>
+            <TouchableOpacity onPress={openCalendar} style={[styles.refreshBtn, { backgroundColor: colors.gold + '20' }]}>
+              <Ionicons name="calendar" size={18} color={colors.gold} />
+              {hasUnseenEvents && <View style={styles.calendarBadge} />}
+            </TouchableOpacity>
             {Platform.OS === 'web' && (
               <TouchableOpacity
                 onPress={onRefresh}
@@ -142,7 +319,24 @@ export default function HomeScreen() {
             <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
             <Text style={{ color: colors.textSecondary, fontSize: 13, marginLeft: 6 }}>{today}</Text>
           </View>
+          <View style={[styles.dateRow, { marginTop: 4 }]}>
+            <Ionicons name="moon-outline" size={14} color={colors.gold} />
+            <Text style={{ color: colors.gold, fontSize: 12, marginLeft: 6 }}>{formatHijri(new Date())}</Text>
+          </View>
         </View>
+
+        {/* Calendar Modal */}
+        <CalendarModal
+          visible={showCalendar}
+          onClose={() => setShowCalendar(false)}
+          events={data?.calendarEvents || []}
+          colors={colors}
+          isDark={isDark}
+          calMonth={calMonth}
+          calYear={calYear}
+          setCalMonth={setCalMonth}
+          setCalYear={setCalYear}
+        />
 
         {/* Jummah Prayer */}
         {data.jummah && (
@@ -318,4 +512,5 @@ const styles = StyleSheet.create({
   timeItem: {},
   offlineBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, borderWidth: 1 },
   refreshBtn: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
+  calendarBadge: { position: 'absolute', top: 6, right: 6, width: 8, height: 8, borderRadius: 4, backgroundColor: '#ef4444' },
 })

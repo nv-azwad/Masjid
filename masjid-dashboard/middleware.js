@@ -30,7 +30,7 @@ export function middleware(request) {
     })
   }
 
-  const publicGetApis = ['/api/prayers', '/api/imams', '/api/jummah', '/api/mosque', '/api/notifications', '/api/keepalive']
+  const publicGetApis = ['/api/prayers', '/api/imams', '/api/jummah', '/api/mosque', '/api/notifications', '/api/keepalive', '/api/calendar', '/api/community-posts']
   if (request.method === 'GET' && publicGetApis.some(api => pathname.startsWith(api))) {
     const response = NextResponse.next()
     response.headers.set('Access-Control-Allow-Origin', '*')
@@ -40,10 +40,12 @@ export function middleware(request) {
   // Allow cron jobs (authenticated by CRON_SECRET in the route handler)
   if (pathname.startsWith('/api/cron/')) return NextResponse.next()
 
-  // Allow member registration and push token endpoints (mobile app)
+  // Allow public POST endpoints (mobile app)
   if (pathname === '/api/members' && request.method === 'POST') return NextResponse.next()
   if (pathname.startsWith('/api/push-tokens')) return NextResponse.next()
   if (pathname.startsWith('/api/members/me')) return NextResponse.next()
+  if (pathname === '/api/community-posts' && request.method === 'POST') return NextResponse.next()
+  if (pathname === '/api/app-open' && request.method === 'POST') return NextResponse.next()
 
   // All other routes require auth token
   if (!token) {

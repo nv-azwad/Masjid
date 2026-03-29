@@ -61,6 +61,21 @@ export const passwordChangeSchema = z.object({
   newPassword: passwordSchema,
 })
 
+// Calendar event validation
+export const calendarEventSchema = z.object({
+  date: z.string().min(1, 'Date is required'),
+  title: z.string().min(1, 'Title is required').max(200),
+  description: z.string().max(1000).optional().default(''),
+  type: z.enum(['event', 'special_prayer', 'holiday', 'reminder']).default('event'),
+})
+
+// Community post validation
+export const communityPostSchema = z.object({
+  authorName: z.string().max(100).optional().nullable(),
+  content: z.string().min(1, 'Message is required').max(750),
+  deviceId: z.string().min(1, 'Device ID is required'),
+})
+
 // Pending change validation
 export const pendingReviewSchema = z.object({
   id: z.string().min(1, 'Change ID is required'),

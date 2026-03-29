@@ -75,6 +75,8 @@ function Icon({ name, size = 20, className = '' }) {
     shield: <><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></>,
     users: <><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></>,
     logout: <><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></>,
+    calendar: <><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,
+    chat: <><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></>,
   }
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -562,6 +564,198 @@ function Notifications({ onToast }) {
   )
 }
 
+// ── Calendar Events ──
+function CalendarEvents({ onToast }) {
+  const [events, setEvents] = useState([])
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [date, setDate] = useState('')
+  const [type, setType] = useState('event')
+  const [saving, setSaving] = useState(false)
+  const [editId, setEditId] = useState(null)
+
+  const loadEvents = useCallback(async () => {
+    const data = await api.get('/api/calendar')
+    if (Array.isArray(data)) setEvents(data)
+  }, [])
+
+  useEffect(() => { loadEvents() }, [loadEvents])
+
+  const save = async () => {
+    if (!title.trim() || !date) return
+    setSaving(true)
+    if (editId) {
+      const result = await api.put('/api/calendar', { id: editId, date, title, description, type })
+      if (result.error) { onToast(result.error, 'error') } else { onToast('Event updated', 'success') }
+    } else {
+      const result = await api.post('/api/calendar', { date, title, description, type })
+      if (result.error) { onToast(result.error, 'error') } else { onToast('Event created', 'success') }
+    }
+    setTitle(''); setDescription(''); setDate(''); setType('event'); setEditId(null)
+    setSaving(false)
+    loadEvents()
+  }
+
+  const startEdit = (e) => {
+    setEditId(e.id)
+    setTitle(e.title)
+    setDescription(e.description || '')
+    setDate(e.date.split('T')[0])
+    setType(e.type)
+  }
+
+  const remove = async (id) => {
+    const result = await api.del('/api/calendar', { id })
+    if (result.error) { onToast(result.error, 'error') } else { onToast('Event deleted', 'success'); loadEvents() }
+  }
+
+  const typeLabels = { event: 'Event', special_prayer: 'Special Prayer', holiday: 'Holiday', reminder: 'Reminder' }
+  const typeColors = { event: 'text-blue-400', special_prayer: 'text-masjid-green', holiday: 'text-masjid-gold', reminder: 'text-purple-400' }
+
+  return (
+    <div>
+      <h2 className="text-white text-xl font-semibold mb-5">Islamic Calendar Events</h2>
+      <div className="bg-masjid-card rounded-xl p-6 border border-masjid-border mb-6">
+        <h3 className="text-masjid-gold font-medium mb-4">{editId ? 'Edit Event' : 'Add Event'}</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-masjid-gold text-xs mb-1.5 font-medium">Date</label>
+            <input type="date" className="w-full bg-masjid-bg border border-masjid-border rounded-lg px-4 py-2.5 text-white text-sm outline-none focus:border-masjid-green" value={date} onChange={e => setDate(e.target.value)} />
+          </div>
+          <div>
+            <label className="block text-masjid-gold text-xs mb-1.5 font-medium">Type</label>
+            <select className="w-full bg-masjid-bg border border-masjid-border rounded-lg px-4 py-2.5 text-white text-sm outline-none focus:border-masjid-green" value={type} onChange={e => setType(e.target.value)}>
+              <option value="event">Event</option>
+              <option value="special_prayer">Special Prayer</option>
+              <option value="holiday">Holiday</option>
+              <option value="reminder">Reminder</option>
+            </select>
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-masjid-gold text-xs mb-1.5 font-medium">Title</label>
+            <input className="w-full bg-masjid-bg border border-masjid-border rounded-lg px-4 py-2.5 text-white text-sm outline-none focus:border-masjid-green" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Shab-e-Qadr Special Prayer" />
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-masjid-gold text-xs mb-1.5 font-medium">Description (optional)</label>
+            <textarea className="w-full bg-masjid-bg border border-masjid-border rounded-lg px-4 py-2.5 text-white text-sm outline-none focus:border-masjid-green min-h-[80px] resize-y" value={description} onChange={e => setDescription(e.target.value)} placeholder="Details about the event..." />
+          </div>
+        </div>
+        <div className="flex gap-3 mt-4">
+          <button onClick={save} disabled={saving} className={`bg-masjid-green text-masjid-dark px-5 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 ${saving ? 'opacity-50' : ''}`}>
+            <Icon name={editId ? 'save' : 'plus'} size={16} /> {saving ? 'Saving...' : editId ? 'Update Event' : 'Add Event'}
+          </button>
+          {editId && (
+            <button onClick={() => { setEditId(null); setTitle(''); setDescription(''); setDate(''); setType('event') }} className="bg-transparent border border-masjid-border text-gray-400 px-4 py-2.5 rounded-lg text-sm">Cancel</button>
+          )}
+        </div>
+      </div>
+      {events.length > 0 && (
+        <div>
+          <h3 className="text-gray-500 text-xs uppercase tracking-wider font-semibold mb-3">Upcoming Events</h3>
+          <div className="flex flex-col gap-3">
+            {events.map((e) => (
+              <div key={e.id} className="bg-masjid-card rounded-xl p-4 border border-masjid-border">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`text-[0.65rem] uppercase tracking-wider font-bold ${typeColors[e.type] || 'text-gray-400'}`}>{typeLabels[e.type] || e.type}</span>
+                      <span className="text-gray-600 text-xs">{new Date(e.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    </div>
+                    <p className="text-white font-medium text-sm">{e.title}</p>
+                    {e.description && <p className="text-gray-400 text-sm mt-1">{e.description}</p>}
+                  </div>
+                  <div className="flex gap-2 ml-3">
+                    <button onClick={() => startEdit(e)} className="text-gray-500 hover:text-masjid-gold transition p-1"><Icon name="edit" size={14} /></button>
+                    <button onClick={() => remove(e.id)} className="text-gray-500 hover:text-red-400 transition p-1"><Icon name="trash" size={14} /></button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Community Posts Moderation ──
+function CommunityPosts({ onToast }) {
+  const [tab, setTab] = useState('pending')
+  const [posts, setPosts] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  const loadPosts = useCallback(async (status) => {
+    setLoading(true)
+    const data = await api.get(`/api/community-posts?status=${status}`)
+    if (Array.isArray(data)) setPosts(data)
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { loadPosts(tab) }, [tab, loadPosts])
+
+  const review = async (id, status) => {
+    const result = await api.put('/api/community-posts', { id, status })
+    if (result.error) { onToast(result.error, 'error') } else { onToast(`Post ${status}`, 'success'); loadPosts(tab) }
+  }
+
+  const remove = async (id) => {
+    const result = await api.del('/api/community-posts', { id })
+    if (result.error) { onToast(result.error, 'error') } else { onToast('Post deleted', 'success'); loadPosts(tab) }
+  }
+
+  const tabStyle = (t) => `px-4 py-2 text-sm rounded-lg border-none cursor-pointer transition ${tab === t ? 'bg-masjid-green/15 text-masjid-green font-semibold' : 'bg-transparent text-gray-400 hover:bg-masjid-card'}`
+
+  return (
+    <div>
+      <h2 className="text-white text-xl font-semibold mb-5">Community Posts</h2>
+      <div className="flex gap-2 mb-5">
+        <button className={tabStyle('pending')} onClick={() => setTab('pending')}>Pending</button>
+        <button className={tabStyle('approved')} onClick={() => setTab('approved')}>Approved</button>
+        <button className={tabStyle('rejected')} onClick={() => setTab('rejected')}>Rejected</button>
+      </div>
+      {loading ? (
+        <p className="text-gray-500 text-sm">Loading...</p>
+      ) : posts.length === 0 ? (
+        <div className="bg-masjid-card rounded-xl p-8 border border-masjid-border text-center">
+          <p className="text-gray-500 text-sm">No {tab} posts</p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {posts.map((p) => (
+            <div key={p.id} className="bg-masjid-card rounded-xl p-4 border border-masjid-border">
+              <div className="flex justify-between items-start mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-full bg-masjid-green/20 flex items-center justify-center">
+                    <Icon name="user" size={12} className="text-masjid-green" />
+                  </div>
+                  <span className="text-white text-sm font-medium">{p.authorName || 'Anonymous'}</span>
+                </div>
+                <span className="text-gray-600 text-xs">{new Date(p.createdAt).toLocaleString()}</span>
+              </div>
+              <p className="text-gray-300 text-sm leading-relaxed mb-3">{p.content}</p>
+              <div className="flex gap-2">
+                {tab === 'pending' && (
+                  <>
+                    <button onClick={() => review(p.id, 'approved')} className="bg-masjid-green/15 text-masjid-green px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 border-none cursor-pointer">
+                      <Icon name="check" size={12} /> Approve
+                    </button>
+                    <button onClick={() => review(p.id, 'rejected')} className="bg-red-500/15 text-red-400 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 border-none cursor-pointer">
+                      <Icon name="x" size={12} /> Reject
+                    </button>
+                  </>
+                )}
+                <button onClick={() => remove(p.id)} className="bg-transparent text-gray-600 hover:text-red-400 px-2 py-1.5 rounded-lg text-xs flex items-center gap-1 border-none cursor-pointer transition ml-auto">
+                  <Icon name="trash" size={12} /> Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Pending Approvals (Admin) / My Submissions (Moderator) ──
 function PendingApprovals({ userRole, onToast }) {
   const [changes, setChanges] = useState([])
@@ -892,6 +1086,7 @@ export default function DashboardPage() {
   const [jummah, setJummah] = useState(null)
   const [imams, setImams] = useState([])
   const [pendingCount, setPendingCount] = useState(0)
+  const [communityPendingCount, setCommunityPendingCount] = useState(0)
   const [appStats, setAppStats] = useState(null)
   const [toast, setToast] = useState(null)
 
@@ -928,10 +1123,11 @@ export default function DashboardPage() {
   const loadData = useCallback(async () => {
     try {
       // Load mosque data and pending count in parallel
-      const [mosqueData, pending, stats] = await Promise.all([
+      const [mosqueData, pending, stats, communityPending] = await Promise.all([
         api.get('/api/mosque'),
         api.get('/api/pending'),
         api.get('/api/stats').catch(() => null),
+        api.get('/api/community-posts?status=pending').catch(() => []),
       ])
       if (stats) setAppStats(stats)
       setPrayers(mosqueData.prayers || [])
@@ -940,6 +1136,9 @@ export default function DashboardPage() {
 
       if (Array.isArray(pending)) {
         setPendingCount(pending.filter(p => p.status === 'PENDING').length)
+      }
+      if (Array.isArray(communityPending)) {
+        setCommunityPendingCount(communityPending.length)
       }
     } catch (e) {
       console.error('Failed to load data:', e)
@@ -976,6 +1175,8 @@ export default function DashboardPage() {
     { id: 'jummah', label: 'Jummah Prayer', icon: 'star' },
     { id: 'imams', label: 'Imam Profiles', icon: 'user' },
     { id: 'notifications', label: 'Notifications', icon: 'bell' },
+    { id: 'calendar', label: 'Calendar Events', icon: 'calendar' },
+    { id: 'community', label: 'Community Posts', icon: 'chat', badge: communityPendingCount > 0 ? communityPendingCount : null },
     { id: 'approvals', label: user.role === 'ADMIN' ? 'Approvals' : 'My Submissions', icon: 'shield', badge: pendingCount > 0 ? pendingCount : null },
     ...(user.role === 'ADMIN' ? [{ id: 'users', label: 'Users', icon: 'users' }] : []),
   ]
@@ -1038,6 +1239,8 @@ export default function DashboardPage() {
           {section === 'jummah' && <JummahManager jummah={jummah} onRefresh={loadData} onToast={showToast} />}
           {section === 'imams' && <ImamsManager imams={imams} onRefresh={loadData} onToast={showToast} />}
           {section === 'notifications' && <Notifications onToast={showToast} />}
+          {section === 'calendar' && <CalendarEvents onToast={showToast} />}
+          {section === 'community' && <CommunityPosts onToast={showToast} />}
           {section === 'approvals' && <PendingApprovals userRole={user.role} onToast={showToast} />}
           {section === 'users' && user.role === 'ADMIN' && <UserManagement currentUser={user} onToast={showToast} />}
         </main>

@@ -13,6 +13,19 @@ import { fetchMosqueData } from '../services/api'
 import { API_BASE } from '../constants/config'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
+// Tell expo-notifications how to display notifications (required for local scheduled notifications)
+if (Platform.OS !== 'web') {
+  import('expo-notifications').then(Notifications => {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+      }),
+    })
+  }).catch(() => {})
+}
+
 // Shared context so preloaded data flows to home screen without re-fetch
 const PreloadContext = createContext(null)
 export function usePreloadedData() { return useContext(PreloadContext) }
