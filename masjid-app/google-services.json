@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "446963779854",
+    "project_id": "gausul-azam-masjid",
+    "storage_bucket": "gausul-azam-masjid.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:446963779854:android:358f5698923b57f7be6f5f",
+        "android_client_info": {
+          "package_name": "com.trinovent.gausulazam"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDBL0D3Zlq32Sdnlfkr541suFTcMvkyNrM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
