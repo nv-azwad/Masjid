@@ -129,6 +129,14 @@ export default function HomeScreen() {
               <Text style={[styles.mosqueName, { color: colors.gold }]}>{data.mosque?.name || 'Gausul Azam Jameh Masjid'}</Text>
               <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>{data.mosque?.address || 'Road 9, Sector 13, Uttara, Dhaka'}</Text>
             </View>
+            {Platform.OS === 'web' && (
+              <TouchableOpacity
+                onPress={onRefresh}
+                style={[styles.refreshBtn, { backgroundColor: colors.green + '20' }]}
+              >
+                <Ionicons name="refresh" size={18} color={colors.green} />
+              </TouchableOpacity>
+            )}
           </View>
           <View style={styles.dateRow}>
             <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
@@ -309,4 +317,5 @@ const styles = StyleSheet.create({
   timesRow: { flexDirection: 'row', gap: 20 },
   timeItem: {},
   offlineBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, borderWidth: 1 },
+  refreshBtn: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
 })

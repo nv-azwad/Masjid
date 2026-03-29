@@ -1,12 +1,17 @@
 import { Tabs } from 'expo-router'
-import { View, Text, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet, Platform } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../../context/ThemeContext'
 import { usePreloadedData } from '../_layout'
 
 export default function TabLayout() {
   const { colors, isDark } = useTheme()
   const { unreadCount } = usePreloadedData() || {}
+  const insets = useSafeAreaInsets()
+
+  // Account for iPhone home indicator / Android nav bar
+  const bottomPadding = Math.max(insets.bottom, 8)
 
   return (
     <Tabs
@@ -16,8 +21,8 @@ export default function TabLayout() {
           backgroundColor: colors.card,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 8,
+          height: 56 + bottomPadding,
+          paddingBottom: bottomPadding,
           paddingTop: 4,
         },
         tabBarActiveTintColor: colors.green,
