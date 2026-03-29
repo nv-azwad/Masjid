@@ -35,6 +35,11 @@ export default function HomeScreen() {
     ])
     setData(d)
     setNotifPrefs(prefs)
+
+    // Reschedule prayer reminders with fresh data
+    if (prefs?.enabled && d?.prayers && Platform.OS !== 'web') {
+      schedulePrayerReminders(d.prayers, prefs).catch(() => {})
+    }
   }, [])
 
   // Use preloaded data immediately, then load prefs

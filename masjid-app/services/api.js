@@ -3,10 +3,9 @@ import { calculatePrayerTimes } from './prayerTimes'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const CACHE_KEY = 'mosque_data_cache'
-const CACHE_TTL = 60 * 60 * 1000 // 1 hour
 
-// Fetch with timeout (5 seconds instead of default ~30s)
-function fetchWithTimeout(url, timeout = 5000) {
+// Fetch with timeout (8 seconds to allow slower networks)
+function fetchWithTimeout(url, timeout = 8000) {
   return Promise.race([
     fetch(url),
     new Promise((_, reject) =>
@@ -15,18 +14,7 @@ function fetchWithTimeout(url, timeout = 5000) {
   ])
 }
 
-// Load cached data if fresh enough
-async function getCachedData() {
-  try {
-    const raw = await AsyncStorage.getItem(CACHE_KEY)
-    if (!raw) return null
-    const { data, timestamp } = JSON.parse(raw)
-    if (Date.now() - timestamp < CACHE_TTL) return data
-  } catch {}
-  return null
-}
-
-// Save data to cache
+// Save data to cache (offline fallback only)
 async function setCachedData(data) {
   try {
     await AsyncStorage.setItem(CACHE_KEY, JSON.stringify({ data, timestamp: Date.now() }))
@@ -34,23 +22,13 @@ async function setCachedData(data) {
 }
 
 // Fetch all mosque data (prayers, jummah, imams) in one call
-// Dashboard connected → adhan times (calculated) + jamaat times (from admin)
-// Dashboard unavailable → adhan times + estimated jamaat times (both calculated)
+// Always hits the API first so dashboard changes appear immediately.
+// Cache is only used as fallback when the API is unreachable.
 export async function fetchMosqueData() {
   // Always calculate adhan times — these are accurate
   const calculated = calculatePrayerTimes()
 
   try {
-    // Try cache first
-    const cached = await getCachedData()
-    if (cached) {
-      // Re-mark next prayer based on current time
-      if (cached.prayers && cached.prayers.length > 0) {
-        cached.prayers = markNextPrayer(cached.prayers)
-      }
-      return cached
-    }
-
     const res = await fetchWithTimeout(`${API_BASE}/api/mosque`)
     if (!res.ok) throw new Error('Network error')
     const data = await res.json()
@@ -70,14 +48,14 @@ export async function fetchMosqueData() {
       }))
     }
 
-    // Cache the result
+    // Cache for offline fallback
     await setCachedData(data)
 
     return data
   } catch (error) {
-    console.log('Dashboard unavailable, using auto-calculated prayer times')
+    console.log('Dashboard unavailable, using fallback')
 
-    // Try returning stale cache before falling back to calculated
+    // Try returning cached data before falling back to calculated
     try {
       const raw = await AsyncStorage.getItem(CACHE_KEY)
       if (raw) {

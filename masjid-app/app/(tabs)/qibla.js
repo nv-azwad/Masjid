@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { View, Text, StyleSheet, Dimensions, Platform } from 'react-native'
+import { View, Text, StyleSheet, Dimensions, Platform, Animated } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../../context/ThemeContext'
@@ -8,14 +8,26 @@ import { useTheme } from '../../context/ThemeContext'
 const QIBLA_BEARING = 282
 const isWeb = Platform.OS === 'web'
 
+// Smoothing and dead zone constants
+const SMOOTHING_FACTOR = 0.06 // lower = smoother (6% new, 94% old)
+const DEAD_ZONE = 1.5 // ignore changes smaller than 1.5°
+const ANIM_DURATION = 250 // ms for each animated transition
+
 export default function QiblaScreen() {
   const { colors, isDark } = useTheme()
-  const [heading, setHeading] = useState(0)
+  const [displayHeading, setDisplayHeading] = useState(0)
   const [status, setStatus] = useState(isWeb ? 'web' : 'loading')
-  const prevHeading = useRef(0)
+
+  // Animated value tracks cumulative rotation (can exceed 360 or go negative)
+  // This avoids the 360→0 wraparound jump
+  const animatedHeading = useRef(new Animated.Value(0)).current
+  const smoothedRef = useRef(0) // smoothed heading (0-360)
+  const cumulativeRef = useRef(0) // cumulative (unwrapped) heading for animation
+  const lastAnimTarget = useRef(0) // last value we animated to
+  const animRef = useRef(null)
 
   useEffect(() => {
-    if (isWeb) return // No compass on web
+    if (isWeb) return
 
     let headingSub
 
@@ -38,15 +50,38 @@ export default function QiblaScreen() {
         setStatus('active')
 
         headingSub = await Location.watchHeadingAsync((data) => {
-          const newHeading = data.trueHeading >= 0 ? data.trueHeading : data.magHeading
+          const raw = data.trueHeading >= 0 ? data.trueHeading : data.magHeading
 
-          let diff = newHeading - prevHeading.current
+          // Shortest-path difference for exponential smoothing
+          let diff = raw - smoothedRef.current
           if (diff > 180) diff -= 360
           if (diff < -180) diff += 360
-          const smooth = (prevHeading.current + 0.1 * diff + 360) % 360
-          prevHeading.current = smooth
 
-          setHeading(smooth)
+          // Exponential smoothing
+          const smoothed = (smoothedRef.current + SMOOTHING_FACTOR * diff + 360) % 360
+          smoothedRef.current = smoothed
+
+          // Dead zone: skip if barely changed
+          let animDiff = smoothed - (lastAnimTarget.current % 360 + 360) % 360
+          if (animDiff > 180) animDiff -= 360
+          if (animDiff < -180) animDiff += 360
+          if (Math.abs(animDiff) < DEAD_ZONE) return
+
+          // Update cumulative rotation (no 360 wraparound)
+          cumulativeRef.current += animDiff
+          lastAnimTarget.current = cumulativeRef.current
+
+          // Animate to the new heading
+          if (animRef.current) animRef.current.stop()
+          animRef.current = Animated.timing(animatedHeading, {
+            toValue: cumulativeRef.current,
+            duration: ANIM_DURATION,
+            useNativeDriver: true,
+          })
+          animRef.current.start()
+
+          // Update the numeric display (less frequently due to dead zone)
+          setDisplayHeading(Math.round(smoothed))
         })
       } catch (e) {
         console.log('Heading error:', e)
@@ -55,18 +90,26 @@ export default function QiblaScreen() {
     }
 
     startHeading()
-    return () => headingSub?.remove()
+    return () => {
+      headingSub?.remove()
+      if (animRef.current) animRef.current.stop()
+    }
   }, [])
 
   const size = Dimensions.get('window').width - 80
 
-  // Compass rose rotates opposite to heading so N points to real North
-  const compassRotation = -heading
-  // Qibla arrow: difference between Qibla bearing and current heading
-  const qiblaRotation = QIBLA_BEARING - heading
+  // Animated rotations using interpolate for smooth rendering
+  const compassRotation = animatedHeading.interpolate({
+    inputRange: [-360, 0, 360],
+    outputRange: ['360deg', '0deg', '-360deg'],
+  })
+  const qiblaRotation = animatedHeading.interpolate({
+    inputRange: [-360, 0, 360],
+    outputRange: [`${QIBLA_BEARING + 360}deg`, `${QIBLA_BEARING}deg`, `${QIBLA_BEARING - 360}deg`],
+  })
 
   // Check if roughly pointing at Qibla (within ±5°)
-  const qiblaOffset = ((QIBLA_BEARING - heading + 360) % 360)
+  const qiblaOffset = ((QIBLA_BEARING - displayHeading + 360) % 360)
   const isPointingQibla = qiblaOffset < 5 || qiblaOffset > 355
 
   // Cardinal & intercardinal labels
@@ -102,7 +145,7 @@ export default function QiblaScreen() {
         <View style={[styles.headingRow, { backgroundColor: colors.bg, borderColor: colors.border }]}>
           <View style={styles.headingItem}>
             <Text style={{ color: colors.textMuted, fontSize: 10, textTransform: 'uppercase', letterSpacing: 1 }}>Heading</Text>
-            <Text style={{ color: colors.text, fontSize: 18, fontWeight: '600' }}>{Math.round(heading)}°</Text>
+            <Text style={{ color: colors.text, fontSize: 18, fontWeight: '600' }}>{displayHeading}°</Text>
           </View>
           <View style={[styles.headingDivider, { backgroundColor: colors.border }]} />
           <View style={styles.headingItem}>
@@ -120,10 +163,10 @@ export default function QiblaScreen() {
         </View>
 
         <View style={[styles.compassOuter, { width: size, height: size }]}>
-          {/* Rotating compass rose */}
-          <View style={[
+          {/* Rotating compass rose — uses Animated.View for smooth native transitions */}
+          <Animated.View style={[
             styles.compassRose,
-            { width: size, height: size, transform: [{ rotate: `${compassRotation}deg` }] },
+            { width: size, height: size, transform: [{ rotate: compassRotation }] },
           ]}>
             {/* Outer ring */}
             <View style={[styles.outerRing, { width: size - 4, height: size - 4, borderColor: colors.border + '80' }]} />
@@ -177,13 +220,13 @@ export default function QiblaScreen() {
 
             {/* Inner ring */}
             <View style={[styles.innerRing, { width: size - 70, height: size - 70, borderColor: colors.border + '40' }]} />
-          </View>
+          </Animated.View>
 
           {/* Qibla arrow (rotates independently over the compass) */}
-          <View
+          <Animated.View
             style={[
               styles.qiblaOverlay,
-              { transform: [{ rotate: `${qiblaRotation}deg` }] },
+              { transform: [{ rotate: qiblaRotation }] },
             ]}
           >
             <View style={styles.qiblaArrowColumn}>
@@ -194,7 +237,7 @@ export default function QiblaScreen() {
                 <Ionicons name="locate" size={18} color={isDark ? '#0f1210' : '#fff'} />
               </View>
             </View>
-          </View>
+          </Animated.View>
 
           {/* Center dot */}
           <View style={[styles.centerDot, { backgroundColor: colors.gold }]} />

@@ -18,6 +18,33 @@ const DEFAULT_PREFS = {
   },
 }
 
+// ─── Android Notification Channels ───
+
+async function setupAndroidChannels() {
+  if (Platform.OS !== 'android') return
+  try {
+    const Notifications = await import('expo-notifications')
+    // Default channel for server-sent push notifications
+    await Notifications.setNotificationChannelAsync('default', {
+      name: 'Default',
+      importance: Notifications.AndroidImportance?.MAX ?? 5,
+      vibrationPattern: [0, 250, 250, 250],
+    })
+    // Dedicated channel for prayer reminders — high priority ensures pop-up
+    await Notifications.setNotificationChannelAsync('prayer-reminders', {
+      name: 'Prayer Reminders',
+      description: 'Reminders before prayer jamaat times',
+      importance: Notifications.AndroidImportance?.MAX ?? 5,
+      vibrationPattern: [0, 250, 250, 250],
+      sound: 'default',
+      enableLights: true,
+      enableVibrate: true,
+    })
+  } catch (e) {
+    console.log('Channel setup failed:', e)
+  }
+}
+
 // ─── Push Token Registration ───
 
 export async function registerForPushNotifications() {
@@ -56,14 +83,8 @@ export async function registerForPushNotifications() {
     const tokenData = await Notifications.getExpoPushTokenAsync({ projectId })
     const token = tokenData.data
 
-    // Configure notification appearance on Android
-    if (Platform.OS === 'android') {
-      Notifications.setNotificationChannelAsync('default', {
-        name: 'Default',
-        importance: Notifications.AndroidImportance?.MAX,
-        vibrationPattern: [0, 250, 250, 250],
-      })
-    }
+    // Set up Android notification channels
+    await setupAndroidChannels()
 
     // Store token locally
     await AsyncStorage.setItem(PUSH_TOKEN_KEY, token)
@@ -132,14 +153,17 @@ export async function schedulePrayerReminders(prayers, prefs) {
 
     if (!prefs.enabled) return
 
+    // Ensure Android channels exist before scheduling
+    await setupAndroidChannels()
+
     const now = new Date()
 
     for (const prayer of prayers) {
       const prayerKey = prayer.name.toLowerCase()
       if (!prefs.prayers[prayerKey]) continue
 
-      // Parse prayer time
-      const timeStr = prayer.adhan || prayer.time
+      // Use jamaat time (prayer.time) — that's what the congregation follows
+      const timeStr = prayer.time
       const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i)
       if (!match) continue
 
@@ -150,23 +174,28 @@ export async function schedulePrayerReminders(prayers, prefs) {
       if (period === 'AM' && hours === 12) hours = 0
 
       // Schedule for today if time hasn't passed, otherwise skip
-      const prayerDate = new Date(now)
-      prayerDate.setHours(hours, minutes, 0, 0)
+      const jamaatDate = new Date(now)
+      jamaatDate.setHours(hours, minutes, 0, 0)
 
-      if (prayerDate.getTime() <= now.getTime()) continue
+      if (jamaatDate.getTime() <= now.getTime()) continue
 
-      // Schedule notification 5 minutes before adhan
-      const triggerDate = new Date(prayerDate.getTime() - 5 * 60000)
+      // Schedule notification 15 minutes before jamaat
+      const triggerDate = new Date(jamaatDate.getTime() - 15 * 60000)
       if (triggerDate.getTime() <= now.getTime()) continue
 
       await Notifications.scheduleNotificationAsync({
         content: {
           title: `${prayer.name} Prayer`,
-          body: `${prayer.name} adhan at ${timeStr}. Time to prepare for prayer.`,
+          body: `${prayer.name} jamaat in 15 minutes (${timeStr}). Time to prepare for prayer.`,
           sound: 'default',
+          priority: 'max',
+          ...(Platform.OS === 'android' ? { channelId: 'prayer-reminders' } : {}),
           data: { type: 'prayer_reminder', prayer: prayerKey },
         },
-        trigger: { date: triggerDate },
+        trigger: {
+          type: 'date',
+          date: triggerDate.getTime(),
+        },
       })
     }
   } catch (e) {
