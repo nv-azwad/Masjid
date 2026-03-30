@@ -17,6 +17,8 @@ export default function QiblaScreen() {
   const { colors, isDark } = useTheme()
   const [displayHeading, setDisplayHeading] = useState(0)
   const [status, setStatus] = useState(isWeb ? 'web' : 'loading')
+  const [needsCalibration, setNeedsCalibration] = useState(false)
+  const dataReceivedRef = useRef(false)
 
   // Animated value tracks cumulative rotation (can exceed 360 or go negative)
   // This avoids the 360→0 wraparound jump
@@ -49,8 +51,22 @@ export default function QiblaScreen() {
 
         setStatus('active')
 
+        // If no heading data after 3 seconds, show calibration message
+        const calibrationTimer = setTimeout(() => {
+          if (!dataReceivedRef.current) setNeedsCalibration(true)
+        }, 3000)
+
         headingSub = await Location.watchHeadingAsync((data) => {
           const raw = data.trueHeading >= 0 ? data.trueHeading : data.magHeading
+
+          // Check for bad data (some devices return -1 or 0 constantly)
+          if (raw < 0) return
+
+          if (!dataReceivedRef.current) {
+            dataReceivedRef.current = true
+            setNeedsCalibration(false)
+            clearTimeout(calibrationTimer)
+          }
 
           // Shortest-path difference for exponential smoothing
           let diff = raw - smoothedRef.current
@@ -243,8 +259,18 @@ export default function QiblaScreen() {
           <View style={[styles.centerDot, { backgroundColor: colors.gold }]} />
         </View>
 
+        {/* Calibration prompt */}
+        {needsCalibration && status === 'active' && (
+          <View style={[styles.statusBadge, { backgroundColor: colors.gold + '20', borderColor: colors.gold + '40' }]}>
+            <Ionicons name="sync" size={16} color={colors.gold} />
+            <Text style={{ color: colors.gold, fontSize: 12, fontWeight: '500', marginLeft: 6, flex: 1 }}>
+              Compass needs calibration — wave your phone in a figure-8 pattern
+            </Text>
+          </View>
+        )}
+
         {/* Facing Qibla badge */}
-        {isPointingQibla && status === 'active' && (
+        {isPointingQibla && status === 'active' && !needsCalibration && (
           <View style={[styles.statusBadge, { backgroundColor: colors.green + '20', borderColor: colors.green + '40' }]}>
             <Ionicons name="checkmark-circle" size={16} color={colors.green} />
             <Text style={{ color: colors.green, fontSize: 13, fontWeight: '600', marginLeft: 6 }}>Facing Qibla</Text>
