@@ -1124,7 +1124,7 @@ export default function DashboardPage() {
     try {
       // Load mosque data and pending count in parallel
       const [mosqueData, pending, stats, communityPending] = await Promise.all([
-        api.get('/api/mosque'),
+        api.get(`/api/mosque?t=${Date.now()}`),
         api.get('/api/pending'),
         api.get('/api/stats').catch(() => null),
         api.get('/api/community-posts?status=pending').catch(() => []),
