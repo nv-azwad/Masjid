@@ -182,6 +182,7 @@ function RootLayoutInner() {
   const [showSplash, setShowSplash] = useState(true)
   const [preloadedData, setPreloadedData] = useState(null)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [unreadPosts, setUnreadPosts] = useState(0)
   const dataReady = useRef(false)
   const minTimePassed = useRef(false)
 
@@ -200,6 +201,7 @@ function RootLayoutInner() {
       fetchMosqueData().catch(() => null),
       getNotificationPrefs().catch(() => null),
       loadUnreadCount(),
+      loadUnreadPosts(),
     ]).then(([mosqueData, prefs]) => {
       if (mosqueData) setPreloadedData(mosqueData)
       dataReady.current = true
@@ -235,6 +237,27 @@ function RootLayoutInner() {
     }
   }
 
+  async function loadUnreadPosts() {
+    try {
+      const lastSeen = await AsyncStorage.getItem('community_posts_last_seen')
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), 5000)
+      const res = await fetch(`${API_BASE}/api/community-posts`, { signal: controller.signal })
+      clearTimeout(timer)
+      if (res.ok) {
+        const posts = await res.json()
+        if (Array.isArray(posts) && lastSeen) {
+          const count = posts.filter(p => new Date(p.createdAt) > new Date(lastSeen)).length
+          setUnreadPosts(count)
+        } else if (Array.isArray(posts)) {
+          setUnreadPosts(posts.length)
+        }
+      }
+    } catch (e) {
+      console.log('Unread posts check failed:', e.message)
+    }
+  }
+
   async function initNotifications(mosqueData, prefs) {
     try {
       if (Platform.OS === 'web') {
@@ -257,12 +280,17 @@ function RootLayoutInner() {
     await AsyncStorage.setItem('notifications_last_seen', new Date().toISOString())
   }
 
+  const markPostsRead = async () => {
+    setUnreadPosts(0)
+    await AsyncStorage.setItem('community_posts_last_seen', new Date().toISOString())
+  }
+
   if (showSplash) {
     return <SplashScreen />
   }
 
   return (
-    <PreloadContext.Provider value={{ preloadedData, unreadCount, markNotificationsRead }}>
+    <PreloadContext.Provider value={{ preloadedData, unreadCount, unreadPosts, markNotificationsRead, markPostsRead }}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <Stack
         screenOptions={{

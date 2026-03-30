@@ -7,7 +7,8 @@ import { usePreloadedData } from '../_layout'
 
 export default function TabLayout() {
   const { colors, isDark } = useTheme()
-  const { unreadCount } = usePreloadedData() || {}
+  const { unreadCount, unreadPosts } = usePreloadedData() || {}
+  const totalUnread = (unreadCount || 0) + (unreadPosts || 0)
   const insets = useSafeAreaInsets()
 
   // Account for iPhone home indicator / Android nav bar
@@ -44,9 +45,9 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => (
             <View>
               <Ionicons name="megaphone" size={size} color={color} />
-              {unreadCount > 0 && (
+              {totalUnread > 0 && (
                 <View style={[styles.badge, { backgroundColor: '#ef4444' }]}>
-                  <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+                  <Text style={styles.badgeText}>{totalUnread > 9 ? '9+' : totalUnread}</Text>
                 </View>
               )}
             </View>

@@ -14,7 +14,7 @@ const showAlert = (title, message) => {
 
 export default function NotificationsScreen() {
   const { colors, isDark } = useTheme()
-  const { markNotificationsRead } = usePreloadedData() || {}
+  const { markNotificationsRead, markPostsRead, unreadPosts } = usePreloadedData() || {}
   const [tab, setTab] = useState('announcements')
   const [notifications, setNotifications] = useState([])
   const [posts, setPosts] = useState([])
@@ -146,10 +146,15 @@ export default function NotificationsScreen() {
               Announcements
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity style={tabStyle('community')} onPress={() => setTab('community')}>
-            <Text style={{ color: tab === 'community' ? colors.green : colors.textMuted, fontSize: 13, fontWeight: '600' }}>
-              Community
-            </Text>
+          <TouchableOpacity style={tabStyle('community')} onPress={() => { setTab('community'); if (markPostsRead) markPostsRead() }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={{ color: tab === 'community' ? colors.green : colors.textMuted, fontSize: 13, fontWeight: '600' }}>
+                Community
+              </Text>
+              {tab !== 'community' && unreadPosts > 0 && (
+                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#ef4444' }} />
+              )}
+            </View>
           </TouchableOpacity>
         </View>
 
