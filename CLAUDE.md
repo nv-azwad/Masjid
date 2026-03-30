@@ -6,8 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Mosque management system for Gausul Azam Jameh Masjid (Uttara, Dhaka) with three sub-projects:
 
-- **`masjid-dashboard/`** — Next.js 14 admin dashboard for managing prayer times, imams, Jummah details, and notifications
-- **`masjid-app/`** — React Native Expo mobile app + PWA for the mosque community (prayer times, Quran reader, Qibla compass)
+- **`masjid-dashboard/`** — Next.js 14 admin dashboard for managing prayer times, imams, Jummah details, notifications, calendar events, and community posts
+- **`masjid-app/`** — React Native Expo mobile app + PWA for the mosque community (prayer times, Quran reader, Qibla compass, Islamic calendar, community posts)
 
 ## Deployment
 
@@ -15,7 +15,7 @@ Mosque management system for Gausul Azam Jameh Masjid (Uttara, Dhaka) with three
 - **PWA (Web App):** Live at `https://gausul-azam-masjid.vercel.app/` (separate Vercel project, root dir: `masjid-app`)
 - **Database:** PostgreSQL on Neon free tier (neondb, ap-southeast-1). Keepalive ping via cron-job.org every 5 min.
 - **Cron:** Vercel cron at `0 18 * * *` (midnight BD time) auto-syncs prayer times. Protected by `CRON_SECRET` env var.
-- **Android APK:** Built via EAS (Expo account: nv-azwad). Firebase FCM for push notifications.
+- **Android APK:** Built via EAS (Expo account: nv-azwad). Build command: `npx eas-cli@latest build --platform android --profile preview`. Firebase FCM for push notifications.
 - **GitHub:** Private repo at github.com/nv-azwad/Masjid
 
 ## Auth System
@@ -61,13 +61,19 @@ npm run build:web    # Build Expo Web PWA (output: dist/)
 ## Architecture
 
 ### Data Flow
-The mobile app and PWA fetch all mosque data from the dashboard's `/api/mosque` endpoint (prayers, jummah settings, imams, mosque info in one call). If the API is unreachable, the app falls back to locally calculated prayer times via adhan.js.
+The mobile app and PWA fetch all mosque data from the dashboard's `/api/mosque` endpoint (prayers, jummah settings, imams, mosque info, calendar events in one call). CDN cached with `s-maxage=30, stale-while-revalidate=60`. If the API is unreachable, the app falls back to cached data in AsyncStorage, then locally calculated prayer times via adhan.js (network-first strategy).
+
+### New Features (v1.1.0)
+- **Islamic Calendar:** Hijri date on home screen header, calendar modal with month navigation, admin-managed events (event types: event, special_prayer, holiday, reminder), red badge for unseen events
+- **Community Posts:** Two-tab Updates screen (Announcements + Community), users submit messages (anonymous or named, 750 char limit), admin approves/rejects in dashboard, rate limited to 3 posts/device/day
+- **Prayer Reminders:** Local scheduled notifications 15min before jamaat time, Android notification channel with MAX importance, `setNotificationHandler` in `_layout.js` for foreground display
+- **Qibla Compass:** Animated.Value with native driver, 0.06 smoothing factor, 1.5° dead zone, cumulative rotation tracking — DO NOT modify, confirmed working perfectly
 
 ### Dashboard (Next.js App Router)
-- Single-page dashboard: entire UI is in `app/page.js` as a client component with section-based navigation (Overview, Prayers, Jummah, Imams, Notifications, Users)
+- Single-page dashboard: entire UI is in `app/page.js` as a client component with section-based navigation (Overview, Prayers, Jummah, Imams, Notifications, Calendar Events, Community Posts, Users)
 - API routes in `app/api/` — each resource has its own `route.js`
 - Database: PostgreSQL via Prisma ORM. Schema in `prisma/schema.prisma`
-- Models: User, Mosque, Prayer, JummahSetting, Imam, Notification, PushToken, AppInstall, Member, PendingChange
+- Models: User, Mosque, Prayer, JummahSetting, Imam, Notification, PushToken, AppInstall, Member, PendingChange, CalendarEvent, CommunityPost
 - Prisma client singleton in `lib/prisma.js` (cached in `globalThis` for dev hot reload)
 - Input validation via Zod schemas in `lib/validations.js`
 - Custom Tailwind colors under the `masjid` namespace (green, gold, card, bg, border, dark) defined in `tailwind.config.js`
@@ -79,6 +85,8 @@ The mobile app and PWA fetch all mosque data from the dashboard's `/api/mosque` 
 - `services/quranApi.js` — Al Quran Cloud API client with AsyncStorage caching (surahs cached permanently after first fetch)
 - `context/ThemeContext.js` — light/dark theme provider
 - `constants/config.js` — color palette (light/dark), `API_BASE` URL, and Quran API URL
+- `services/hijriDate.js` — lightweight Gregorian-to-Hijri converter (Umm al-Qura algorithm, ±1 day accuracy)
+- `services/notifications.js` — push token registration, Android channels (MAX importance), local prayer reminders (15min before jamaat)
 - Web (PWA): native features (push notifications, compass) gracefully skip on web platform
 
 ### Key Configuration
