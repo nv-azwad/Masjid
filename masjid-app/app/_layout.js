@@ -8,6 +8,8 @@ import {
   sendTokenToServer,
   getNotificationPrefs,
   schedulePrayerReminders,
+  registerForWebPush,
+  sendWebSubToServer,
 } from '../services/notifications'
 import { fetchMosqueData } from '../services/api'
 import { API_BASE } from '../constants/config'
@@ -203,8 +205,8 @@ function RootLayoutInner() {
       dataReady.current = true
       if (minTimePassed.current) setShowSplash(false)
 
-      // Init push notifications in background (native only)
-      if (prefs?.enabled && Platform.OS !== 'web') {
+      // Init push notifications in background
+      if (prefs?.enabled) {
         initNotifications(mosqueData, prefs)
       }
     })
@@ -235,10 +237,15 @@ function RootLayoutInner() {
 
   async function initNotifications(mosqueData, prefs) {
     try {
-      const result = await registerForPushNotifications()
-      if (result.token) await sendTokenToServer(result.token)
-      if (mosqueData?.prayers) {
-        await schedulePrayerReminders(mosqueData.prayers, prefs)
+      if (Platform.OS === 'web') {
+        const result = await registerForWebPush()
+        if (result.subscription) await sendWebSubToServer(result.subscription)
+      } else {
+        const result = await registerForPushNotifications()
+        if (result.token) await sendTokenToServer(result.token)
+        if (mosqueData?.prayers) {
+          await schedulePrayerReminders(mosqueData.prayers, prefs)
+        }
       }
     } catch (e) {
       console.log('Notification init skipped:', e.message)

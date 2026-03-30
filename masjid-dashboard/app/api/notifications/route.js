@@ -42,6 +42,15 @@ export async function POST(request) {
         await sendExpoPush(tokens.map(t => t.token), data.title, data.message)
       }
 
+      // Send web push to PWA subscribers
+      const webSubs = await prisma.webPushSubscription.findMany({
+        where: { active: true },
+        select: { id: true, endpoint: true, p256dh: true, auth: true },
+      })
+      if (webSubs.length > 0) {
+        await sendWebPush(webSubs, data.title, data.message)
+      }
+
       return NextResponse.json(notification)
     }
 
@@ -74,6 +83,44 @@ export async function DELETE(request) {
   } catch (error) {
     console.error('Delete notification error:', error.message)
     return NextResponse.json({ error: 'Failed to delete notification' }, { status: 500 })
+  }
+}
+
+async function sendWebPush(subscriptions, title, message) {
+  if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
+    console.log('Web push skipped: VAPID keys not configured')
+    return
+  }
+  try {
+    const webpush = require('web-push')
+    webpush.setVapidDetails(
+      process.env.VAPID_EMAIL || 'mailto:admin@gausulazammasjid.com',
+      process.env.VAPID_PUBLIC_KEY,
+      process.env.VAPID_PRIVATE_KEY
+    )
+
+    const payload = JSON.stringify({ title, body: message })
+    const expired = []
+
+    for (const sub of subscriptions) {
+      try {
+        await webpush.sendNotification(
+          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+          payload
+        )
+      } catch (err) {
+        if (err.statusCode === 410 || err.statusCode === 404) {
+          expired.push(sub.id)
+        }
+        console.error('Web push send error:', err.message)
+      }
+    }
+
+    if (expired.length > 0) {
+      await prisma.webPushSubscription.deleteMany({ where: { id: { in: expired } } })
+    }
+  } catch (e) {
+    console.error('Web push error:', e.message)
   }
 }
 

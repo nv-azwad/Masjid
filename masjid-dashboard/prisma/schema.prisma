@@ -135,6 +135,17 @@ model CommunityPost {
   createdAt   DateTime @default(now())
 }
 
+// Web push subscriptions for PWA users
+model WebPushSubscription {
+  id        String   @id @default(cuid())
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 // Community members (mosque attendees) - separate from admin User model
 model Member {
   id          String   @id @default(cuid())

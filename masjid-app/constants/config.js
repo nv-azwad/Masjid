@@ -38,3 +38,6 @@ export const API_BASE = 'https://masjid-dun.vercel.app'
 
 // Al Quran API
 export const QURAN_API = 'https://api.alquran.cloud/v1'
+
+// VAPID public key for web push notifications (this is a public key, safe to commit)
+export const VAPID_PUBLIC_KEY = 'BE62Is31Hhb2NPREP955IEjqHQTczLCE5Sy4H9riNwHiSVqYe2AUpY-1ZTgW1-GqbwdG34Wkzt5zfWwl2bZ8rNg'

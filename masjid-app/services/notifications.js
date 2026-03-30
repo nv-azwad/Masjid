@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Platform } from 'react-native'
-import { API_BASE } from '../constants/config'
+import { API_BASE, VAPID_PUBLIC_KEY } from '../constants/config'
 
 const NOTIF_PREFS_KEY = 'notification_prefs'
 const PUSH_TOKEN_KEY = 'push_token'
@@ -202,5 +202,73 @@ export async function schedulePrayerReminders(prayers, prefs) {
     }
   } catch (e) {
     console.log('Failed to schedule prayer reminders:', e)
+  }
+}
+
+// ─── Web Push (PWA only) ───
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4)
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+  const rawData = atob(base64)
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)))
+}
+
+export async function registerForWebPush() {
+  if (Platform.OS !== 'web') return { subscription: null, reason: 'not_web' }
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    return { subscription: null, reason: 'not_supported' }
+  }
+
+  try {
+    const permission = await Notification.requestPermission()
+    if (permission !== 'granted') {
+      return { subscription: null, reason: 'permission_denied' }
+    }
+
+    const registration = await navigator.serviceWorker.register('/sw.js')
+    await navigator.serviceWorker.ready
+
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+    })
+
+    await AsyncStorage.setItem(PUSH_TOKEN_KEY, subscription.endpoint)
+    return { subscription, reason: null }
+  } catch (e) {
+    console.log('Web push registration failed:', e.message)
+    return { subscription: null, reason: 'error', message: e.message }
+  }
+}
+
+export async function sendWebSubToServer(subscription) {
+  try {
+    const json = subscription.toJSON()
+    await fetch(`${API_BASE}/api/web-push-subscriptions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        endpoint: json.endpoint,
+        p256dh: json.keys.p256dh,
+        auth: json.keys.auth,
+      }),
+    })
+  } catch (e) {
+    console.log('Failed to send web push subscription to server:', e.message)
+  }
+}
+
+export async function deactivateWebSubOnServer() {
+  try {
+    const endpoint = await AsyncStorage.getItem(PUSH_TOKEN_KEY)
+    if (!endpoint) return
+    await fetch(`${API_BASE}/api/web-push-subscriptions`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint }),
+    })
+  } catch (e) {
+    console.log('Failed to deactivate web push subscription:', e.message)
   }
 }

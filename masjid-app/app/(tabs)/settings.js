@@ -10,6 +10,9 @@ import {
   getNotificationPrefs,
   saveNotificationPrefs,
   schedulePrayerReminders,
+  registerForWebPush,
+  sendWebSubToServer,
+  deactivateWebSubOnServer,
 } from '../../services/notifications'
 import { fetchMosqueData } from '../../services/api'
 
@@ -51,48 +54,58 @@ export default function SettingsScreen() {
       await saveNotificationPrefs(prefs)
 
       if (value) {
-        // Push notifications not available on web
         if (Platform.OS === 'web') {
-          prefs.enabled = false
-          await saveNotificationPrefs(prefs)
-          setNotificationsOn(false)
-          showAlert(
-            'Not Available on Web',
-            'Push notifications are only available on the mobile app.',
-          )
-          setTogglingNotif(false)
-          return
-        }
-
-        // Enable: register push token + schedule reminders
-        const result = await registerForPushNotifications()
-        if (result.token) {
-          await sendTokenToServer(result.token)
-        } else {
-          prefs.enabled = false
-          await saveNotificationPrefs(prefs)
-          setNotificationsOn(false)
-          const messages = {
-            web: 'Push notifications are only available on the mobile app.',
-            permission_denied: 'Please enable notification permissions in your device settings.',
-            not_physical_device: 'Push notifications are only available on physical devices.',
-            no_project_id: 'App configuration error. Please reinstall the app.',
-            error: `Something went wrong: ${result.message || 'Unknown error'}`,
+          // Web push notifications
+          const result = await registerForWebPush()
+          if (result.subscription) {
+            await sendWebSubToServer(result.subscription)
+          } else {
+            prefs.enabled = false
+            await saveNotificationPrefs(prefs)
+            setNotificationsOn(false)
+            const messages = {
+              not_supported: 'Your browser does not support push notifications. Try Chrome or Edge.',
+              permission_denied: 'Please allow notification permissions in your browser settings.',
+              error: `Something went wrong: ${result.message || 'Unknown error'}`,
+            }
+            showAlert('Notifications Unavailable', messages[result.reason] || messages.error)
+            setTogglingNotif(false)
+            return
           }
-          showAlert('Notifications Unavailable', messages[result.reason] || messages.error)
-          setTogglingNotif(false)
-          return
-        }
+        } else {
+          // Native push notifications
+          const result = await registerForPushNotifications()
+          if (result.token) {
+            await sendTokenToServer(result.token)
+          } else {
+            prefs.enabled = false
+            await saveNotificationPrefs(prefs)
+            setNotificationsOn(false)
+            const messages = {
+              permission_denied: 'Please enable notification permissions in your device settings.',
+              not_physical_device: 'Push notifications are only available on physical devices.',
+              no_project_id: 'App configuration error. Please reinstall the app.',
+              error: `Something went wrong: ${result.message || 'Unknown error'}`,
+            }
+            showAlert('Notifications Unavailable', messages[result.reason] || messages.error)
+            setTogglingNotif(false)
+            return
+          }
 
-        // Schedule local prayer reminders
-        const data = await fetchMosqueData()
-        if (data?.prayers) {
-          await schedulePrayerReminders(data.prayers, prefs)
+          // Schedule local prayer reminders (native only)
+          const data = await fetchMosqueData()
+          if (data?.prayers) {
+            await schedulePrayerReminders(data.prayers, prefs)
+          }
         }
       } else {
-        // Disable: deactivate token + cancel reminders
-        await deactivateTokenOnServer()
-        await schedulePrayerReminders([], prefs) // cancels all
+        // Disable
+        if (Platform.OS === 'web') {
+          await deactivateWebSubOnServer()
+        } else {
+          await deactivateTokenOnServer()
+          await schedulePrayerReminders([], prefs) // cancels all
+        }
       }
     } catch (e) {
       console.log('Notification toggle error:', e)
@@ -142,7 +155,7 @@ export default function SettingsScreen() {
             <Text style={[styles.sectionTitle, { color: colors.gold }]}>Notifications</Text>
           </View>
           <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 14 }}>
-            Get reminders 5 minutes before each prayer
+            {Platform.OS === 'web' ? 'Get mosque announcements in your browser' : 'Get reminders before each prayer jamaat'}
           </Text>
           <View style={[styles.settingRow, { backgroundColor: colors.bg, borderColor: colors.border }]}>
             <View style={{ flex: 1, marginRight: 12 }}>

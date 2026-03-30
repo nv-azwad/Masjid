@@ -43,6 +43,11 @@ export function middleware(request) {
   // Allow public POST endpoints (mobile app)
   if (pathname === '/api/members' && request.method === 'POST') return NextResponse.next()
   if (pathname.startsWith('/api/push-tokens')) return NextResponse.next()
+  if (pathname.startsWith('/api/web-push-subscriptions') && (request.method === 'POST' || request.method === 'DELETE')) {
+    const response = NextResponse.next()
+    response.headers.set('Access-Control-Allow-Origin', '*')
+    return response
+  }
   if (pathname.startsWith('/api/members/me')) return NextResponse.next()
   if (pathname === '/api/community-posts' && request.method === 'POST') {
     const response = NextResponse.next()
