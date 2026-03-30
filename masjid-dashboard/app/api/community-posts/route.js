@@ -96,6 +96,10 @@ export async function PUT(request) {
         reviewedAt: new Date(),
       },
     })
+
+    // Notify the user who submitted the post
+    await notifyPostAuthor(post.deviceId, status)
+
     return NextResponse.json(post)
   } catch (error) {
     console.error('Community post review error:', error.message)
@@ -119,5 +123,56 @@ export async function DELETE(request) {
   } catch (error) {
     console.error('Community post delete error:', error.message)
     return NextResponse.json({ error: 'Failed to delete post' }, { status: 500 })
+  }
+}
+
+// Send a notification to the post author's device
+async function notifyPostAuthor(deviceId, status) {
+  if (!deviceId) return
+
+  const title = status === 'approved' ? 'Post Approved' : 'Post Not Approved'
+  const body = status === 'approved'
+    ? 'Your community message has been approved and is now visible to everyone.'
+    : 'Your community message was reviewed and not approved by the admin.'
+
+  // Try Expo push token first (Android app)
+  const pushToken = await prisma.pushToken.findFirst({
+    where: { deviceId, active: true },
+    select: { token: true },
+  })
+
+  if (pushToken) {
+    try {
+      await fetch('https://exp.host/--/api/v2/push/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ to: pushToken.token, sound: 'default', title, body }),
+      })
+    } catch (e) {
+      console.error('Expo push to author failed:', e.message)
+    }
+  }
+
+  // Try web push subscription (PWA)
+  const webSub = await prisma.webPushSubscription.findFirst({
+    where: { deviceId, active: true },
+    select: { endpoint: true, p256dh: true, auth: true },
+  })
+
+  if (webSub && process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+    try {
+      const webpush = require('web-push')
+      webpush.setVapidDetails(
+        process.env.VAPID_EMAIL || 'mailto:admin@gausulazammasjid.com',
+        process.env.VAPID_PUBLIC_KEY,
+        process.env.VAPID_PRIVATE_KEY
+      )
+      await webpush.sendNotification(
+        { endpoint: webSub.endpoint, keys: { p256dh: webSub.p256dh, auth: webSub.auth } },
+        JSON.stringify({ title, body })
+      )
+    } catch (e) {
+      console.error('Web push to author failed:', e.message)
+    }
   }
 }

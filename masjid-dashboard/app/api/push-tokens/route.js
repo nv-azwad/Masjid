@@ -14,7 +14,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
     }
 
-    const { token } = await request.json()
+    const { token, deviceId } = await request.json()
     if (!token || typeof token !== 'string') {
       return NextResponse.json({ error: 'Token is required' }, { status: 400 })
     }
@@ -36,8 +36,8 @@ export async function POST(request) {
     // Upsert: create if new, reactivate if exists
     const pushToken = await prisma.pushToken.upsert({
       where: { token },
-      update: { active: true, ...(memberId && { memberId }) },
-      create: { token, ...(memberId && { memberId }) },
+      update: { active: true, ...(memberId && { memberId }), ...(deviceId && { deviceId }) },
+      create: { token, ...(memberId && { memberId }), ...(deviceId && { deviceId }) },
     })
 
     return NextResponse.json(pushToken)

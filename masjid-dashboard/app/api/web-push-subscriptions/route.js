@@ -13,7 +13,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
     }
 
-    const { endpoint, p256dh, auth } = await request.json()
+    const { endpoint, p256dh, auth, deviceId } = await request.json()
     if (!endpoint || !p256dh || !auth) {
       return NextResponse.json({ error: 'endpoint, p256dh, and auth are required' }, { status: 400 })
     }
@@ -23,8 +23,8 @@ export async function POST(request) {
 
     const sub = await prisma.webPushSubscription.upsert({
       where: { endpoint },
-      update: { p256dh, auth, active: true },
-      create: { endpoint, p256dh, auth },
+      update: { p256dh, auth, active: true, ...(deviceId && { deviceId }) },
+      create: { endpoint, p256dh, auth, ...(deviceId && { deviceId }) },
     })
 
     return NextResponse.json(sub)

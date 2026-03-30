@@ -99,10 +99,11 @@ export async function registerForPushNotifications() {
 // Send token to backend
 export async function sendTokenToServer(token) {
   try {
+    const deviceId = await AsyncStorage.getItem('device_id')
     await fetch(`${API_BASE}/api/push-tokens`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token }),
+      body: JSON.stringify({ token, deviceId }),
     })
   } catch (e) {
     console.log('Failed to send token to server:', e)
@@ -244,6 +245,7 @@ export async function registerForWebPush() {
 
 export async function sendWebSubToServer(subscription) {
   try {
+    const deviceId = await AsyncStorage.getItem('device_id')
     const json = subscription.toJSON()
     await fetch(`${API_BASE}/api/web-push-subscriptions`, {
       method: 'POST',
@@ -252,6 +254,7 @@ export async function sendWebSubToServer(subscription) {
         endpoint: json.endpoint,
         p256dh: json.keys.p256dh,
         auth: json.keys.auth,
+        deviceId,
       }),
     })
   } catch (e) {
