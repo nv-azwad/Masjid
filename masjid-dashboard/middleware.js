@@ -44,7 +44,11 @@ export function middleware(request) {
   if (pathname === '/api/members' && request.method === 'POST') return NextResponse.next()
   if (pathname.startsWith('/api/push-tokens')) return NextResponse.next()
   if (pathname.startsWith('/api/members/me')) return NextResponse.next()
-  if (pathname === '/api/community-posts' && request.method === 'POST') return NextResponse.next()
+  if (pathname === '/api/community-posts' && request.method === 'POST') {
+    const response = NextResponse.next()
+    response.headers.set('Access-Control-Allow-Origin', '*')
+    return response
+  }
   if (pathname === '/api/app-open' && request.method === 'POST') return NextResponse.next()
 
   // All other routes require auth token

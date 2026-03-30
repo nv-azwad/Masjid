@@ -23,7 +23,7 @@ if (Platform.OS !== 'web') {
         shouldSetBadge: false,
       }),
     })
-  }).catch(() => {})
+  }).catch(e => console.log('Notification handler setup skipped:', e.message))
 }
 
 // Shared context so preloaded data flows to home screen without re-fetch
@@ -170,7 +170,9 @@ async function trackAppOpen() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ deviceId, platform }),
     }).catch(() => {}) // fire and forget
-  } catch {}
+  } catch (e) {
+    console.log('App open tracking failed:', e.message)
+  }
 }
 
 function RootLayoutInner() {
@@ -226,7 +228,9 @@ function RootLayoutInner() {
           setUnreadCount(notifs.length)
         }
       }
-    } catch {}
+    } catch (e) {
+      console.log('Unread count check failed:', e.message)
+    }
   }
 
   async function initNotifications(mosqueData, prefs) {

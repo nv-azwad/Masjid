@@ -131,7 +131,9 @@ export async function getNotificationPrefs() {
   try {
     const stored = await AsyncStorage.getItem(NOTIF_PREFS_KEY)
     if (stored) return JSON.parse(stored)
-  } catch (e) {}
+  } catch (e) {
+    console.log('Failed to load notification prefs:', e.message)
+  }
   return DEFAULT_PREFS
 }
 
@@ -194,7 +196,7 @@ export async function schedulePrayerReminders(prayers, prefs) {
         },
         trigger: {
           type: 'date',
-          date: triggerDate.getTime(),
+          date: triggerDate,
         },
       })
     }
